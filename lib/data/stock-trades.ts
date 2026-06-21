@@ -205,14 +205,22 @@ function matchNameToBioguide(
   return null;
 }
 
-// ─── Cache ──────────────────────────────────────────────────────────────
+// ─── Per-chamber cache ──────────────────────────────────────────────────
+//
+// Earlier versions loaded both Senate (3MB) and House (11MB) JSONs on
+// every cold cache build. That's a 14MB cold-start cost when a single
+// senator is requested — enough to push close to Vercel's serverless
+// function timeout under traffic spikes. We now load chambers lazily:
+// only when a request for that chamber's first member arrives. Process
+// instances that only ever see senator requests never pay for the
+// 11MB House data.
 
-type TradesCache = {
+type ChamberCache = {
   byBioguide: Map<string, StockTrade[]>;
-  generatedAt: number;
 };
 
-let tradesCachePromise: Promise<TradesCache> | null = null;
+let senateCachePromise: Promise<ChamberCache> | null = null;
+let houseCachePromise: Promise<ChamberCache> | null = null;
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, {
@@ -224,13 +232,12 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-async function loadTradesCache(): Promise<TradesCache> {
-  if (!tradesCachePromise) {
-    tradesCachePromise = (async () => {
-      const [legislators, senateRaw, houseRaw] = await Promise.all([
+async function loadSenateCache(): Promise<ChamberCache> {
+  if (!senateCachePromise) {
+    senateCachePromise = (async () => {
+      const [legislators, senateRaw] = await Promise.all([
         fetchCurrentLegislators(),
         fetchJson<SenateRawTransaction[]>(SENATE_URL),
-        fetchJson<HouseRawTransaction[]>(HOUSE_URL),
       ]);
       const idx = buildNameIndex(legislators);
       const byBioguide = new Map<string, StockTrade[]>();
@@ -261,6 +268,31 @@ async function loadTradesCache(): Promise<TradesCache> {
         if (bucket) bucket.push(trade);
         else byBioguide.set(bioguide, [trade]);
       }
+
+      for (const trades of byBioguide.values()) {
+        trades.sort((a, b) =>
+          a.transactionDate < b.transactionDate ? 1 : -1
+        );
+      }
+
+      return { byBioguide };
+    })().catch((err) => {
+      senateCachePromise = null;
+      throw err;
+    });
+  }
+  return senateCachePromise;
+}
+
+async function loadHouseCache(): Promise<ChamberCache> {
+  if (!houseCachePromise) {
+    houseCachePromise = (async () => {
+      const [legislators, houseRaw] = await Promise.all([
+        fetchCurrentLegislators(),
+        fetchJson<HouseRawTransaction[]>(HOUSE_URL),
+      ]);
+      const idx = buildNameIndex(legislators);
+      const byBioguide = new Map<string, StockTrade[]>();
 
       for (const row of houseRaw) {
         const name = row.representative;
@@ -295,17 +327,19 @@ async function loadTradesCache(): Promise<TradesCache> {
         else byBioguide.set(bioguide, [trade]);
       }
 
-      // Sort each legislator's trades by transaction date desc.
       for (const trades of byBioguide.values()) {
         trades.sort((a, b) =>
           a.transactionDate < b.transactionDate ? 1 : -1
         );
       }
 
-      return { byBioguide, generatedAt: Date.now() };
-    })();
+      return { byBioguide };
+    })().catch((err) => {
+      houseCachePromise = null;
+      throw err;
+    });
   }
-  return tradesCachePromise;
+  return houseCachePromise;
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────
@@ -321,12 +355,36 @@ export type StockTradesReport = {
 
 const DEFAULT_DISPLAY_LIMIT = 20;
 
+// We need to know which chamber a bioguide belongs to BEFORE deciding
+// which stock-data file to load. The roster is small (~1MB, already
+// fetched and cached by the legislators module) so this is cheap.
+async function chamberForBioguide(
+  bioguide: string
+): Promise<"Senate" | "House" | null> {
+  const list = await fetchCurrentLegislators();
+  const found = list.find((l) => l.bioguide === bioguide);
+  return found?.chamber ?? null;
+}
+
 export async function getStockTradesByBioguide(opts: {
   bioguide: string;
   limit?: number;
 }): Promise<StockTradesReport> {
   const limit = opts.limit ?? DEFAULT_DISPLAY_LIMIT;
-  const cache = await loadTradesCache();
+  const chamber = await chamberForBioguide(opts.bioguide);
+  // Unknown bioguide: surface an empty report rather than 500'ing.
+  if (!chamber) {
+    return {
+      bioguide: opts.bioguide,
+      totalTrades: 0,
+      totalEstimatedVolume: 0,
+      purchaseCount: 0,
+      saleCount: 0,
+      recentTrades: [],
+    };
+  }
+  const cache =
+    chamber === "Senate" ? await loadSenateCache() : await loadHouseCache();
   const trades = cache.byBioguide.get(opts.bioguide) ?? [];
 
   let totalEstimatedVolume = 0;

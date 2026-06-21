@@ -307,6 +307,163 @@ export default function AboutPage() {
           for the House — applying those is on the roadmap.
         </p>
 
+        <h3 style={subHeading}>Outside spending (Super PACs)</h3>
+        <p style={body}>
+          Independent expenditures — money spent for or against a candidate
+          by Super PACs and other outside groups, not by the candidate&apos;s
+          own committee — come from FEC{" "}
+          <a
+            href="https://api.open.fec.gov/developers/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            Schedule E filings
+          </a>
+          . For each legislator we fetch the per-cycle aggregation of
+          independent expenditures by candidate via{" "}
+          <code>schedule_e/by_candidate</code>, split by support vs oppose,
+          and rank the top committees on each side. Each row links to the
+          committee&apos;s public FEC filing page. This is how groups like
+          AIPAC, Citizens United, and the various single-issue Super PACs
+          show their financial weight on a race — money the FEC publicly
+          attributes to a committee but doesn&apos;t appear in the
+          candidate&apos;s own donor data.
+        </p>
+
+        <h3 style={subHeading}>Stock trades (STOCK Act disclosures)</h3>
+        <p style={body}>
+          Every senator and representative is required by the STOCK Act to
+          disclose personal stock trades within 30–45 days. We mirror two
+          community-maintained data repositories built from the official
+          filings:{" "}
+          <a
+            href="https://github.com/timothycarambat/senate-stock-watcher-data"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            senate-stock-watcher-data
+          </a>{" "}
+          (Senate, from efdsearch.senate.gov) and{" "}
+          <a
+            href="https://github.com/TattooedHead/house-stock-watcher-data"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            house-stock-watcher-data
+          </a>{" "}
+          (House, from disclosures-clerk.house.gov). Each trade row links
+          to the actual disclosure document. Estimated volume sums the
+          midpoint of each transaction&apos;s amount range (the STOCK Act
+          requires only a bracketed range, not the exact amount).
+        </p>
+
+        <h3 style={subHeading}>Committee assignments</h3>
+        <p style={body}>
+          Committee and subcommittee memberships — including who chairs or
+          serves as ranking member — come from{" "}
+          <a
+            href="https://github.com/unitedstates/congress-legislators/blob/main/committee-membership-current.yaml"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            committee-membership-current.yaml
+          </a>{" "}
+          in the same unitedstates repo as the roster, paired with{" "}
+          <a
+            href="https://github.com/unitedstates/congress-legislators/blob/main/committees-current.yaml"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            committees-current.yaml
+          </a>{" "}
+          for committee metadata, jurisdictions, and official URLs.
+        </p>
+
+        <h3 style={subHeading}>Sponsored legislation</h3>
+        <p style={body}>
+          Bills each member has introduced come from the official Library
+          of Congress API at{" "}
+          <a
+            href="https://api.congress.gov/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            api.congress.gov
+          </a>
+          . We fetch the sponsored-legislation endpoint per bioguide,
+          filter out amendments (which appear in the same response stream
+          but are noisier at this abstraction level), and surface the most
+          recent primary bills with policy area, latest action, and a
+          link to the full text on congress.gov.
+        </p>
+
+        <h3 style={subHeading}>Federal candidates running for office</h3>
+        <p style={body}>
+          Candidates currently running for federal Senate and House seats
+          come from the FEC{" "}
+          <code>/candidates/search</code> endpoint, filtered to
+          candidate_status=C (active registration) and
+          has_raised_funds=true (skips paper-only filings). Incumbents are
+          suppressed since they already appear in the main legislators
+          roster — this section is specifically the &ldquo;who&apos;s
+          running against them&rdquo; view.
+        </p>
+
+        <h3 style={subHeading}>Federal judges</h3>
+        <p style={body}>
+          Currently-serving federal Article III judges — district court,
+          circuit court, and Supreme Court — come from the{" "}
+          <a
+            href="https://www.fjc.gov/history/judges"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            Federal Judicial Center
+          </a>{" "}
+          federal-judicial-service.csv. Each judge is mapped to the
+          state(s) whose cases their court hears: district courts by the
+          state in the court name, circuit courts to all states in that
+          circuit&apos;s territory. The Supreme Court appears under every
+          state. Party reflects the appointing president, not the
+          judge&apos;s personal affiliation.
+        </p>
+
+        <h3 style={subHeading}>State governors and DC mayor</h3>
+        <p style={body}>
+          Hand-curated. No clean programmatic data source exists (NGA has
+          member pages but no API; Wikipedia is unreliable for recent
+          transitions). Every entry is independently verifiable from the
+          governor&apos;s official state .gov page, which the UI links to.
+          The data file carries a &ldquo;Last full audit&rdquo; date so
+          future maintenance knows when to recheck.
+        </p>
+
+        <h3 style={subHeading}>Voter information</h3>
+        <p style={body}>
+          The Vote section links to{" "}
+          <a
+            href="https://vote.gov"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            vote.gov
+          </a>{" "}
+          (U.S. General Services Administration federal portal) for
+          registration and polling-place lookup, each state&apos;s
+          Secretary of State or Board of Elections division for
+          authoritative state-specific rules, and 866-OUR-VOTE
+          (Election Protection, run by the Lawyers&apos; Committee for
+          Civil Rights) for nonpartisan voter assistance.
+        </p>
+
         <h3 style={subHeading}>Stated positions</h3>
         <p style={body}>
           For each legislator we score on statement-vote alignment, the
@@ -518,11 +675,64 @@ export default function AboutPage() {
             </a>{" "}
             (U.S. Federal Election Commission)
           </div>
-          <div>
+          <div style={{ marginBottom: 6 }}>
             State partisan lean:{" "}
             <a href="https://www.cookpolitical.com/cook-pvi" style={link}>
               Cook Political Report PVI 2025
             </a>
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            Outside spending + candidates:{" "}
+            <a href="https://api.open.fec.gov" style={link}>
+              FEC Schedules E + candidates/search
+            </a>
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            STOCK Act disclosures:{" "}
+            <a
+              href="https://efdsearch.senate.gov"
+              style={link}
+            >
+              efdsearch.senate.gov
+            </a>
+            ,{" "}
+            <a
+              href="https://disclosures-clerk.house.gov"
+              style={link}
+            >
+              disclosures-clerk.house.gov
+            </a>{" "}
+            via community mirrors
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            Committee assignments:{" "}
+            <a
+              href="https://github.com/unitedstates/congress-legislators"
+              style={link}
+            >
+              unitedstates/congress-legislators
+            </a>
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            Sponsored bills:{" "}
+            <a href="https://api.congress.gov" style={link}>
+              api.congress.gov
+            </a>{" "}
+            (Library of Congress)
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            Federal judges:{" "}
+            <a href="https://www.fjc.gov/history/judges" style={link}>
+              Federal Judicial Center
+            </a>
+          </div>
+          <div>
+            Voter info:{" "}
+            <a href="https://vote.gov" style={link}>
+              vote.gov
+            </a>{" "}
+            + state Secretary of State portals + 866-OUR-VOTE
+            (Election Protection)
           </div>
         </div>
       </article>

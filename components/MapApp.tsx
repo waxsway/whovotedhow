@@ -121,8 +121,9 @@ export default function MapApp({
             <div className="text-zinc-100 text-lg font-semibold tracking-tight">
               Who Voted How
             </div>
-            <div className="text-zinc-500 text-xs mt-1 hidden md:block">
-              Free political accountability map
+            <div className="text-zinc-500 text-xs mt-1 hidden md:block max-w-xs leading-relaxed">
+              Votes, donors, stock trades, sponsored bills, committees —
+              every state, every member. Free, sourced, no signup.
             </div>
           </div>
           <Link

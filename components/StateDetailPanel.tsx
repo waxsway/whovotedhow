@@ -1814,8 +1814,18 @@ export default function StateDetailPanel({
           lineHeight: 1.55,
         }}
       >
-        Roster: unitedstates/congress-legislators · Portraits:
-        theunitedstates.io · Votes: voteview.com · Donors: fec.gov
+        Sources: unitedstates/congress-legislators · voteview.com · fec.gov ·
+        api.congress.gov · fjc.gov · efdsearch.senate.gov · disclosures-clerk.house.gov ·
+        vote.gov — full methodology + citations on the{" "}
+        <a
+          href="/about"
+          style={{
+            color: "rgba(196,181,253,0.7)",
+            textDecoration: "underline",
+          }}
+        >
+          About page
+        </a>
       </footer>
     </aside>
   );
