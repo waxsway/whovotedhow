@@ -411,7 +411,10 @@ export default function StateDetailPanel({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        zIndex: 20,
+        // drei <Html> badges render with zIndexRange [100, 0] inside the canvas
+        // wrapper. Setting the panel to 1000 keeps it cleanly above every
+        // floating badge so they don't bleed through the panel content.
+        zIndex: 1000,
         fontFamily:
           "var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif",
       }}

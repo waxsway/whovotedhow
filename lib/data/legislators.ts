@@ -21,10 +21,14 @@
 const LEGISLATORS_URL =
   "https://raw.githubusercontent.com/unitedstates/congress-legislators/main/legislators-current.yaml";
 
-// Portraits are still hosted on theunitedstates.io (no GitHub equivalent).
-// We surface the URL but wrap the <img> tag with onError fallback so a single
-// missing or unreachable portrait doesn't break a row.
-const PORTRAIT_BASE = "https://theunitedstates.io/images/congress";
+// Portraits come from the github raw mirror of the unitedstates/images
+// project (gh-pages branch). The original theunitedstates.io image CDN
+// went 403 sometime in 2026 so we route through GitHub raw instead, which
+// is reliably CORS-friendly and serves the same files. Each <img> tag in
+// the panel wraps an onError fallback so a single missing portrait
+// doesn't break a row.
+const PORTRAIT_BASE =
+  "https://raw.githubusercontent.com/unitedstates/images/gh-pages/congress";
 
 export type Party = "D" | "R" | "I" | "Other";
 export type Chamber = "Senate" | "House";
