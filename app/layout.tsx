@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +10,15 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Editorial serif for /about and other long-form reading surfaces. Geist
+// Sans is right for the map UI but reads cramped at body length; Source
+// Serif gives the methodology page the proper register.
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -44,11 +53,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} antialiased`}
     >
-      <body className="h-full m-0 bg-[#05060a] text-zinc-100 overflow-hidden">
-        {children}
-      </body>
+      <body className="m-0 bg-[#05060a] text-zinc-100">{children}</body>
     </html>
   );
 }
