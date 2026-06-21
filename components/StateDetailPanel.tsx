@@ -23,6 +23,7 @@ import CommitteesSection from "@/components/CommitteesSection";
 import BillsSection from "@/components/BillsSection";
 import GovernorSection from "@/components/GovernorSection";
 import CollapsibleSection from "@/components/CollapsibleSection";
+import ShareLinkButton from "@/components/ShareLinkButton";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
 import VoterInfoSection from "@/components/VoterInfoSection";
@@ -1418,6 +1419,18 @@ function LegislatorRow({
             gap: 8,
           }}
         >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              paddingBottom: 2,
+            }}
+          >
+            <ShareLinkButton
+              bioguide={leg.bioguide}
+              displayName={leg.fullName}
+            />
+          </div>
           <CollapsibleSection title="Committee assignments">
             <CommitteesSection bioguide={leg.bioguide} />
           </CollapsibleSection>
