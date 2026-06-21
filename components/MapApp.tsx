@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   fetchCurrentLegislators,
@@ -124,25 +125,39 @@ export default function MapApp({
               Free political accountability map
             </div>
           </div>
+          <Link
+            href="/about"
+            className="md:hidden text-zinc-400 text-xs font-semibold tracking-wide underline-offset-4 hover:text-zinc-100 hover:underline transition-colors"
+          >
+            About
+          </Link>
         </div>
 
         <div className="pointer-events-auto w-full md:flex-1 md:max-w-xs">
           <SearchBar legislators={legislators ?? []} />
         </div>
 
-        <div className="pointer-events-none text-zinc-600 text-xs md:text-right md:max-w-xs leading-relaxed hidden md:block">
-          {legislatorsError ? (
-            <span className="text-red-400">
-              Could not load legislator roster: {legislatorsError}
-            </span>
-          ) : legislators ? (
-            <>
-              {legislators.length.toLocaleString()} members of Congress · Search
-              or click a state
-            </>
-          ) : (
-            <>Loading legislator roster…</>
-          )}
+        <div className="pointer-events-auto md:text-right md:max-w-xs leading-relaxed flex flex-col items-end gap-1">
+          <Link
+            href="/about"
+            className="hidden md:inline-block text-zinc-400 hover:text-zinc-100 text-xs font-semibold tracking-wide underline-offset-4 hover:underline transition-colors"
+          >
+            About &amp; methodology
+          </Link>
+          <div className="text-zinc-600 text-xs leading-relaxed hidden md:block">
+            {legislatorsError ? (
+              <span className="text-red-400">
+                Could not load legislator roster: {legislatorsError}
+              </span>
+            ) : legislators ? (
+              <>
+                {legislators.length.toLocaleString()} members of Congress ·
+                Search or click a state
+              </>
+            ) : (
+              <>Loading legislator roster…</>
+            )}
+          </div>
         </div>
       </div>
 
