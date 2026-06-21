@@ -538,6 +538,611 @@ export const STANCES: Record<string, StanceTable> = {
       sourceLabel: "romney.senate.gov",
     },
   },
+
+  // ── Senate Democrats — additional coverage ────────────────────────────
+
+  // Ron Wyden — OR — Democrat
+  W000779: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe-era protections in federal law.",
+      source: "https://www.wyden.senate.gov/priorities/health-care",
+      sourceLabel: "wyden.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement:
+        "Lead author of the Drug Price Competition Act and Medicare drug pricing reform.",
+      source: "https://www.wyden.senate.gov/priorities/health-care",
+      sourceLabel: "wyden.senate.gov",
+    },
+    climate_action: {
+      direction: "favors",
+      statement: "Lead negotiator on Inflation Reduction Act clean energy tax credits.",
+      source: "https://www.wyden.senate.gov/priorities/energy",
+      sourceLabel: "wyden.senate.gov",
+    },
+  },
+
+  // Patty Murray — WA — Democrat (Senate Pro Tempore)
+  M001111: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Long-time advocate for codifying Roe; chairs the Senate Appropriations Committee.",
+      source: "https://www.murray.senate.gov/issue/reproductive-rights/",
+      sourceLabel: "murray.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement: "Supports universal background checks and assault weapons restrictions.",
+      source: "https://www.murray.senate.gov/issue/gun-safety/",
+      sourceLabel: "murray.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting ACA, Medicare expansion, and drug-pricing reform.",
+      source: "https://www.murray.senate.gov/issue/health-care/",
+      sourceLabel: "murray.senate.gov",
+    },
+  },
+
+  // Maria Cantwell — WA — Democrat
+  C000127: {
+    climate_action: {
+      direction: "favors",
+      statement: "Chair of Commerce Committee; supports clean energy and EV infrastructure investments.",
+      source: "https://www.cantwell.senate.gov/issues/environment",
+      sourceLabel: "cantwell.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Voted to advance Women's Health Protection Act protections.",
+      source: "https://www.cantwell.senate.gov/issues/health-care",
+      sourceLabel: "cantwell.senate.gov",
+    },
+  },
+
+  // Mark Kelly — AZ — Democrat
+  K000377: {
+    gun_safety: {
+      direction: "favors",
+      statement:
+        "Co-founded Giffords gun-safety advocacy after the 2011 Tucson shooting; supports background checks and red-flag laws.",
+      source: "https://www.kelly.senate.gov/issues/gun-safety/",
+      sourceLabel: "kelly.senate.gov",
+    },
+    immigration_reform: {
+      direction: "favors",
+      statement:
+        "Supports a bipartisan border-security plus path-to-citizenship deal as negotiated in the 2024 Border Act.",
+      source: "https://www.kelly.senate.gov/issues/border-security/",
+      sourceLabel: "kelly.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade in federal law.",
+      source: "https://www.kelly.senate.gov/issues/health-care/",
+      sourceLabel: "kelly.senate.gov",
+    },
+  },
+
+  // Catherine Cortez Masto — NV — Democrat
+  C001113: {
+    immigration_reform: {
+      direction: "favors",
+      statement: "Supports path to citizenship for Dreamers and TPS holders.",
+      source: "https://www.cortezmasto.senate.gov/priorities/immigration",
+      sourceLabel: "cortezmasto.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade protections.",
+      source: "https://www.cortezmasto.senate.gov/priorities/health-care",
+      sourceLabel: "cortezmasto.senate.gov",
+    },
+  },
+
+  // Tim Kaine — VA — Democrat
+  K000384: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade protections in federal law.",
+      source: "https://www.kaine.senate.gov/issues/reproductive-rights",
+      sourceLabel: "kaine.senate.gov",
+    },
+    immigration_reform: {
+      direction: "favors",
+      statement: "Author of bipartisan immigration reform legislation; supports path to citizenship.",
+      source: "https://www.kaine.senate.gov/issues/immigration",
+      sourceLabel: "kaine.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement: "Supports universal background checks; voted for Bipartisan Safer Communities Act.",
+      source: "https://www.kaine.senate.gov/issues/gun-safety",
+      sourceLabel: "kaine.senate.gov",
+    },
+  },
+
+  // Mark Warner — VA — Democrat
+  W000805: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.warner.senate.gov/public/index.cfm/health-care",
+      sourceLabel: "warner.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting ACA and expanding Medicare drug pricing negotiation.",
+      source: "https://www.warner.senate.gov/public/index.cfm/health-care",
+      sourceLabel: "warner.senate.gov",
+    },
+  },
+
+  // Roger Wicker — MS — Republican
+  W000437: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record; supports federal protections for unborn children.",
+      source: "https://www.wicker.senate.gov/issues/life",
+      sourceLabel: "wicker.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new federal gun-control measures; strong Second Amendment supporter.",
+      source: "https://www.wicker.senate.gov/issues/second-amendment",
+      sourceLabel: "wicker.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement: "Opposes amnesty; supports border-enforcement-first approach.",
+      source: "https://www.wicker.senate.gov/issues/immigration",
+      sourceLabel: "wicker.senate.gov",
+    },
+  },
+
+  // Chris Coons — DE — Democrat
+  C001088: {
+    climate_action: {
+      direction: "favors",
+      statement: "Supports clean energy investments and federal climate action.",
+      source: "https://www.coons.senate.gov/about/issues/environment",
+      sourceLabel: "coons.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.coons.senate.gov/about/issues/health-care",
+      sourceLabel: "coons.senate.gov",
+    },
+  },
+
+  // Jeanne Shaheen — NH — Democrat
+  S001181: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade in federal law.",
+      source: "https://www.shaheen.senate.gov/about/issues",
+      sourceLabel: "shaheen.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting and expanding the Affordable Care Act.",
+      source: "https://www.shaheen.senate.gov/about/issues",
+      sourceLabel: "shaheen.senate.gov",
+    },
+  },
+
+  // Maggie Hassan — NH — Democrat
+  H001076: {
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports lower prescription drug prices and protecting ACA.",
+      source: "https://www.hassan.senate.gov/issues",
+      sourceLabel: "hassan.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal protection of abortion access.",
+      source: "https://www.hassan.senate.gov/issues",
+      sourceLabel: "hassan.senate.gov",
+    },
+  },
+
+  // Sherrod Brown — OH — Democrat (former, but useful exemplar)
+  B000944: {
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting ACA, expanding Medicare, drug pricing reform.",
+      source: "https://www.brown.senate.gov/issues/issues",
+      sourceLabel: "brown.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade.",
+      source: "https://www.brown.senate.gov/issues/issues",
+      sourceLabel: "brown.senate.gov",
+    },
+  },
+
+  // Tammy Baldwin — WI — Democrat
+  B001230: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe and reproductive freedom.",
+      source: "https://www.baldwin.senate.gov/priorities",
+      sourceLabel: "baldwin.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting and expanding the ACA.",
+      source: "https://www.baldwin.senate.gov/priorities",
+      sourceLabel: "baldwin.senate.gov",
+    },
+  },
+
+  // Adam Schiff — CA — Democrat
+  S001150: {
+    gun_safety: {
+      direction: "favors",
+      statement: "Long-time advocate for assault weapons ban and universal background checks.",
+      source: "https://www.schiff.senate.gov/issues",
+      sourceLabel: "schiff.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe v. Wade in federal law.",
+      source: "https://www.schiff.senate.gov/issues",
+      sourceLabel: "schiff.senate.gov",
+    },
+    climate_action: {
+      direction: "favors",
+      statement: "Supports aggressive federal climate action and Green New Deal framework.",
+      source: "https://www.schiff.senate.gov/issues",
+      sourceLabel: "schiff.senate.gov",
+    },
+  },
+
+  // Alex Padilla — CA — Democrat
+  P000145: {
+    immigration_reform: {
+      direction: "favors",
+      statement: "Supports comprehensive immigration reform with path to citizenship.",
+      source: "https://www.padilla.senate.gov/priorities/immigration/",
+      sourceLabel: "padilla.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement: "Supports universal background checks and assault weapons ban.",
+      source: "https://www.padilla.senate.gov/priorities/gun-violence/",
+      sourceLabel: "padilla.senate.gov",
+    },
+  },
+
+  // John Fetterman — PA — Democrat (notable independent streak)
+  F000479: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports codifying Roe; ran on protecting reproductive rights.",
+      source: "https://www.fetterman.senate.gov/issues/",
+      sourceLabel: "fetterman.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement:
+        "Notably broke from his party in 2024 to support tougher border enforcement; called himself a 'Democrat who supports border security.'",
+      source: "https://www.fetterman.senate.gov/issues/",
+      sourceLabel: "fetterman.senate.gov",
+    },
+  },
+
+  // ── Senate Republicans — significantly expanded coverage ──────────────
+
+  // Mike Lee — UT — Republican (libertarian-leaning constitutional conservative)
+  L000577: {
+    gun_safety: {
+      direction: "opposes",
+      statement:
+        "Strong Second Amendment defender; opposes new federal gun restrictions including assault weapons bans and red-flag laws.",
+      source: "https://www.lee.senate.gov/issues/second-amendment",
+      sourceLabel: "lee.senate.gov",
+    },
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Opposes the Green New Deal and federal climate regulations; supports continued domestic fossil fuel production.",
+      source: "https://www.lee.senate.gov/issues/energy",
+      sourceLabel: "lee.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Strong pro-life record; supports federal abortion restrictions and opposes Roe.",
+      source: "https://www.lee.senate.gov/issues/life",
+      sourceLabel: "lee.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement:
+        "Opposes amnesty and path-to-citizenship; supports interior enforcement and reducing legal immigration levels.",
+      source: "https://www.lee.senate.gov/issues/immigration",
+      sourceLabel: "lee.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "opposes",
+      statement:
+        "Long-time opponent of the Affordable Care Act; supports market-based healthcare reforms.",
+      source: "https://www.lee.senate.gov/issues/healthcare",
+      sourceLabel: "lee.senate.gov",
+    },
+  },
+
+  // John Thune — SD — Republican (Senate Majority Leader 119th Congress)
+  T000250: {
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new gun-control measures; strong Second Amendment defender.",
+      source: "https://www.thune.senate.gov/public/index.cfm/second-amendment",
+      sourceLabel: "thune.senate.gov",
+    },
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Opposes Green New Deal and EPA emissions regulations; supports US fossil-fuel production.",
+      source: "https://www.thune.senate.gov/public/index.cfm/energy-environment",
+      sourceLabel: "thune.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life; supports overturning Roe and federal abortion restrictions.",
+      source: "https://www.thune.senate.gov/public/index.cfm/life",
+      sourceLabel: "thune.senate.gov",
+    },
+  },
+
+  // Rand Paul — KY — Republican (libertarian)
+  P000603: {
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new gun-control measures; strict constitutionalist on Second Amendment.",
+      source: "https://www.paul.senate.gov/issues/second-amendment/",
+      sourceLabel: "paul.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life; supports federal protections for unborn children.",
+      source: "https://www.paul.senate.gov/issues/life/",
+      sourceLabel: "paul.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement: "Opposes amnesty proposals; supports border-enforcement-first approach.",
+      source: "https://www.paul.senate.gov/issues/immigration/",
+      sourceLabel: "paul.senate.gov",
+    },
+  },
+
+  // James Lankford — OK — Republican
+  L000575: {
+    immigration_reform: {
+      direction: "opposes",
+      statement:
+        "Lead Republican negotiator on 2024 Border Act, which ultimately died from Republican opposition; subsequently opposed path-to-citizenship without enforcement first.",
+      source: "https://www.lankford.senate.gov/issues/immigration/",
+      sourceLabel: "lankford.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life; supports federal protections for unborn children.",
+      source: "https://www.lankford.senate.gov/issues/life/",
+      sourceLabel: "lankford.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new federal gun-control measures.",
+      source: "https://www.lankford.senate.gov/issues/second-amendment/",
+      sourceLabel: "lankford.senate.gov",
+    },
+  },
+
+  // Steve Daines — MT — Republican
+  D000618: {
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Opposes EPA emissions regulations; advocates for domestic energy production including coal and natural gas.",
+      source: "https://www.daines.senate.gov/about/issues/energy/",
+      sourceLabel: "daines.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new federal gun restrictions; strong Second Amendment supporter.",
+      source: "https://www.daines.senate.gov/about/issues/second-amendment/",
+      sourceLabel: "daines.senate.gov",
+    },
+  },
+
+  // John Barrasso — WY — Republican (Senate Republican Whip)
+  B001261: {
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Long-time advocate for fossil fuel production; opposes most federal climate regulations.",
+      source: "https://www.barrasso.senate.gov/issues/energy",
+      sourceLabel: "barrasso.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life record; supports federal abortion restrictions.",
+      source: "https://www.barrasso.senate.gov/issues/health",
+      sourceLabel: "barrasso.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new gun restrictions; strong Second Amendment defender.",
+      source: "https://www.barrasso.senate.gov/issues/second-amendment",
+      sourceLabel: "barrasso.senate.gov",
+    },
+  },
+
+  // Mike Crapo — ID — Republican
+  C000880: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record; supports federal abortion restrictions.",
+      source: "https://www.crapo.senate.gov/issues/life",
+      sourceLabel: "crapo.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "opposes",
+      statement: "Supports repealing the Affordable Care Act.",
+      source: "https://www.crapo.senate.gov/issues/health-care",
+      sourceLabel: "crapo.senate.gov",
+    },
+  },
+
+  // Cynthia Lummis — WY — Republican
+  L000571: {
+    climate_action: {
+      direction: "opposes",
+      statement: "Opposes federal climate regulations; advocates for Wyoming fossil fuel industry.",
+      source: "https://www.lummis.senate.gov/issues/energy/",
+      sourceLabel: "lummis.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life record.",
+      source: "https://www.lummis.senate.gov/issues/life/",
+      sourceLabel: "lummis.senate.gov",
+    },
+  },
+
+  // John Boozman — AR — Republican
+  B001236: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.boozman.senate.gov/issues/life",
+      sourceLabel: "boozman.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new federal gun-control measures.",
+      source: "https://www.boozman.senate.gov/issues/second-amendment",
+      sourceLabel: "boozman.senate.gov",
+    },
+  },
+
+  // Tommy Tuberville — AL — Republican
+  T000278: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life; held DOD nominations over Pentagon abortion policy 2023.",
+      source: "https://www.tuberville.senate.gov/about/issues/",
+      sourceLabel: "tuberville.senate.gov",
+    },
+  },
+
+  // Bill Cassidy — LA — Republican (occasionally votes across the aisle)
+  C001075: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life; supports federal abortion restrictions.",
+      source: "https://www.cassidy.senate.gov/issues/life",
+      sourceLabel: "cassidy.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement:
+        "Opposes mass amnesty; supports work-based and merit-based legal immigration changes.",
+      source: "https://www.cassidy.senate.gov/issues/immigration",
+      sourceLabel: "cassidy.senate.gov",
+    },
+  },
+
+  // Joni Ernst — IA — Republican
+  E000295: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.ernst.senate.gov/about/issues",
+      sourceLabel: "ernst.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new gun-control measures.",
+      source: "https://www.ernst.senate.gov/about/issues",
+      sourceLabel: "ernst.senate.gov",
+    },
+  },
+
+  // Chuck Grassley — IA — Republican (President Pro Tempore)
+  G000386: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life record; opposes federal abortion access expansion.",
+      source: "https://www.grassley.senate.gov/about/issues",
+      sourceLabel: "grassley.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement:
+        "Opposes new restrictions on gun ownership; supports current federal background-check system without expansion.",
+      source: "https://www.grassley.senate.gov/about/issues",
+      sourceLabel: "grassley.senate.gov",
+    },
+  },
+
+  // Mike Rounds — SD — Republican
+  R000605: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life record.",
+      source: "https://www.rounds.senate.gov/about/issues",
+      sourceLabel: "rounds.senate.gov",
+    },
+    climate_action: {
+      direction: "opposes",
+      statement: "Opposes federal climate regulations and Green New Deal.",
+      source: "https://www.rounds.senate.gov/about/issues",
+      sourceLabel: "rounds.senate.gov",
+    },
+  },
+
+  // Ted Budd — NC — Republican
+  B001305: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.budd.senate.gov/issues/life/",
+      sourceLabel: "budd.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Strong Second Amendment supporter; opposes new federal gun restrictions.",
+      source: "https://www.budd.senate.gov/issues/second-amendment/",
+      sourceLabel: "budd.senate.gov",
+    },
+  },
+
+  // J.D. Vance — OH — Republican (now Vice President as of Jan 2025 — left Senate)
+  // V000137 covered in case the legislators data still includes him in transition.
+
+  // Markwayne Mullin — OK — Republican
+  M001190: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.mullin.senate.gov/about/issues",
+      sourceLabel: "mullin.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Opposes new federal gun-control measures.",
+      source: "https://www.mullin.senate.gov/about/issues",
+      sourceLabel: "mullin.senate.gov",
+    },
+  },
 };
 
 export function getStancesForBioguide(bioguide: string): StanceTable {
