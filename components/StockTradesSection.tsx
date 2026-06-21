@@ -224,12 +224,53 @@ export default function StockTradesSection({ leg }: { leg: Legislator }) {
   }
 
   const {
+    chamber,
+    sourceUnavailable,
     totalTrades,
     totalEstimatedVolume,
     purchaseCount,
     saleCount,
     recentTrades,
   } = state.report;
+
+  // Senate stock-trade disclosures are temporarily unavailable while we
+  // transition off the stale upstream feed onto a direct EFD scraper.
+  // Surface this honestly instead of pretending the senator has zero
+  // trades — many of them visibly do (Tuberville, Cruz, Burr, etc.).
+  if (sourceUnavailable && chamber === "Senate") {
+    return (
+      <div
+        style={{
+          padding: "10px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px dashed rgba(255,255,255,0.08)",
+          borderRadius: 8,
+          fontSize: 12,
+          color: "rgba(244,244,245,0.55)",
+          lineHeight: 1.55,
+        }}
+      >
+        Senate STOCK Act disclosures are temporarily unavailable. The
+        community-maintained mirror we relied on stopped updating in 2021
+        and senators sworn in since then aren&rsquo;t in it at all. A
+        direct{" "}
+        <a
+          href="https://efdsearch.senate.gov/search/"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            color: "rgba(196,181,253,0.85)",
+            textDecoration: "underline",
+          }}
+        >
+          efdsearch.senate.gov
+        </a>{" "}
+        scraper is the next data-layer project. House STOCK Act disclosures
+        are current — visible on every House member&rsquo;s panel.
+      </div>
+    );
+  }
 
   if (totalTrades === 0) {
     return (
@@ -244,10 +285,10 @@ export default function StockTradesSection({ leg }: { leg: Legislator }) {
           lineHeight: 1.55,
         }}
       >
-        No disclosed stock trades on file. Either this legislator (or their
-        immediate household) has not traded individual securities during
-        their service, or filings have not yet propagated to the public
-        aggregators we mirror.
+        No disclosed stock trades on file. Either this representative (or
+        their immediate household) has not traded individual securities
+        during their service, or recent filings have not yet propagated to
+        the public aggregator we mirror.
       </div>
     );
   }
@@ -315,9 +356,8 @@ export default function StockTradesSection({ leg }: { leg: Legislator }) {
           lineHeight: 1.5,
         }}
       >
-        Source: community-maintained mirrors of efdsearch.senate.gov (Senate)
-        and disclosures-clerk.house.gov (House). Each &ldquo;disclosure&rdquo;
-        link points to the actual filing.
+        Source: community mirror of disclosures-clerk.house.gov. Each
+        &ldquo;disclosure&rdquo; link points to the actual filing PDF.
       </div>
     </div>
   );

@@ -346,6 +346,15 @@ async function loadHouseCache(): Promise<ChamberCache> {
 
 export type StockTradesReport = {
   bioguide: string;
+  // Which chamber the legislator sits in (null when bioguide unknown).
+  // Drives UI labeling: "House STOCK Act disclosures" vs the senate
+  // "data temporarily unavailable" empty state.
+  chamber: "House" | "Senate" | null;
+  // True when we know we don't have current data for this chamber and
+  // are intentionally returning empty rather than misrepresenting an
+  // empty result as "no trades on file". Currently set for all senators
+  // until we ship a direct efdsearch.senate.gov scraper.
+  sourceUnavailable: boolean;
   totalTrades: number;
   totalEstimatedVolume: number; // sum of amount midpoints (where known)
   purchaseCount: number;
@@ -376,6 +385,8 @@ export async function getStockTradesByBioguide(opts: {
   if (!chamber) {
     return {
       bioguide: opts.bioguide,
+      chamber: null,
+      sourceUnavailable: false,
       totalTrades: 0,
       totalEstimatedVolume: 0,
       purchaseCount: 0,
@@ -383,8 +394,28 @@ export async function getStockTradesByBioguide(opts: {
       recentTrades: [],
     };
   }
-  const cache =
-    chamber === "Senate" ? await loadSenateCache() : await loadHouseCache();
+  // The Senate aggregator we used to mirror
+  // (github.com/timothycarambat/senate-stock-watcher-data) stopped updating
+  // in March 2021. Even fixing name-matching against the stale set is
+  // misleading: senators sworn in after 2021 (Tuberville, Vance, Britt,
+  // etc.) can't appear in it at all, and the 2021 snapshot for senators
+  // who were there earlier doesn't reflect the last 4+ years of trades.
+  // Until we ship a direct efdsearch.senate.gov scraper, return an
+  // explicit "data unavailable" report for senators so the UI can show
+  // a real explanation instead of an inaccurate "no trades on file".
+  if (chamber === "Senate") {
+    return {
+      bioguide: opts.bioguide,
+      chamber: "Senate",
+      sourceUnavailable: true,
+      totalTrades: 0,
+      totalEstimatedVolume: 0,
+      purchaseCount: 0,
+      saleCount: 0,
+      recentTrades: [],
+    };
+  }
+  const cache = await loadHouseCache();
   const trades = cache.byBioguide.get(opts.bioguide) ?? [];
 
   let totalEstimatedVolume = 0;
@@ -398,6 +429,8 @@ export async function getStockTradesByBioguide(opts: {
 
   return {
     bioguide: opts.bioguide,
+    chamber: "House",
+    sourceUnavailable: false,
     totalTrades: trades.length,
     totalEstimatedVolume: Math.round(totalEstimatedVolume),
     purchaseCount,

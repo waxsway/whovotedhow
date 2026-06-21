@@ -334,18 +334,8 @@ export default function AboutPage() {
         <h3 style={subHeading}>Stock trades (STOCK Act disclosures)</h3>
         <p style={body}>
           Every senator and representative is required by the STOCK Act to
-          disclose personal stock trades within 30–45 days. We mirror two
-          community-maintained data repositories built from the official
-          filings:{" "}
-          <a
-            href="https://github.com/timothycarambat/senate-stock-watcher-data"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={link}
-          >
-            senate-stock-watcher-data
-          </a>{" "}
-          (Senate, from efdsearch.senate.gov) and{" "}
+          disclose personal stock trades within 30–45 days. For House
+          members we mirror{" "}
           <a
             href="https://github.com/TattooedHead/house-stock-watcher-data"
             target="_blank"
@@ -353,11 +343,33 @@ export default function AboutPage() {
             style={link}
           >
             house-stock-watcher-data
+          </a>
+          , a community repository updated daily from
+          disclosures-clerk.house.gov. Each trade row links to the actual
+          disclosure PDF. Estimated volume sums the midpoint of each
+          transaction&apos;s amount range (the STOCK Act requires only a
+          bracketed range, not an exact amount).
+        </p>
+        <p style={body}>
+          Senate disclosures are currently <strong>unavailable</strong>.
+          The community mirror we previously relied on for the Senate
+          (timothycarambat/senate-stock-watcher-data) stopped updating in
+          March 2021, so senators sworn in after that — Tuberville, Vance,
+          Britt, and many others — can&apos;t appear in it at all, and the
+          pre-2021 snapshot for senators who were there earlier is years
+          stale. Showing it would be misleading. Until we ship a direct
+          scraper of{" "}
+          <a
+            href="https://efdsearch.senate.gov/search/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={link}
+          >
+            efdsearch.senate.gov
           </a>{" "}
-          (House, from disclosures-clerk.house.gov). Each trade row links
-          to the actual disclosure document. Estimated volume sums the
-          midpoint of each transaction&apos;s amount range (the STOCK Act
-          requires only a bracketed range, not the exact amount).
+          (the Senate&apos;s official electronic filing portal), the
+          Senate stock-trade panel says so explicitly rather than
+          pretending the data is empty.
         </p>
 
         <h3 style={subHeading}>Committee assignments</h3>
