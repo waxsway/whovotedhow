@@ -20,6 +20,7 @@ import DonorBubbleChart from "@/components/DonorBubbleChart";
 import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 import StockTradesSection from "@/components/StockTradesSection";
 import CommitteesSection from "@/components/CommitteesSection";
+import BillsSection from "@/components/BillsSection";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
 import VoterInfoSection from "@/components/VoterInfoSection";
@@ -1428,6 +1429,20 @@ function LegislatorRow({
               Committee assignments
             </div>
             <CommitteesSection bioguide={leg.bioguide} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
+              }}
+            >
+              Sponsored bills
+            </div>
+            <BillsSection bioguide={leg.bioguide} />
           </div>
           <div>
             <div
