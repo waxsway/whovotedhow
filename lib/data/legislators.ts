@@ -50,6 +50,11 @@ export type Legislator = {
   // after normalization). H-prefix = House campaign, S-prefix = Senate. Used
   // by the donor pipeline to look up a member's principal campaign committee.
   fecIds: string[];
+  // Earliest term start date across ALL terms in the legislators-current YAML.
+  // Used to compute tenure ("In office since 2007", "18 years in Senate").
+  // For members who left office and returned, this is the date of their
+  // first-ever federal term in the file.
+  firstTermStart: string;
 };
 
 // Raw record shape from legislators-current.json. We type only the fields we
@@ -107,6 +112,16 @@ function normalize(raw: RawLegislator): Legislator | null {
   const currentTerm = terms[0];
   if (!currentTerm) return null;
 
+  // Earliest term across the entire terms array, for tenure display.
+  const firstTermStart = (() => {
+    let earliest = "";
+    for (const t of raw.terms || []) {
+      const s = t.start || "";
+      if (s && (earliest === "" || s < earliest)) earliest = s;
+    }
+    return earliest;
+  })();
+
   const chamber: Chamber = currentTerm.type === "sen" ? "Senate" : "House";
   const state = (currentTerm.state || "").toUpperCase();
   if (!state) return null;
@@ -152,7 +167,30 @@ function normalize(raw: RawLegislator): Legislator | null {
     termEnd: currentTerm.end || "",
     portraitUrl: buildPortraitUrl(bioguide),
     fecIds,
+    firstTermStart,
   };
+}
+
+// Format a tenure summary from firstTermStart. "Sen. since 2007 (18 yrs)"
+// or "Rep. since 2023 (2 yrs)". Returns null when firstTermStart isn't
+// parseable.
+export function formatTenure(leg: Legislator): {
+  yearStarted: number;
+  yearsServed: number;
+  shortLabel: string;
+} | null {
+  const start = leg.firstTermStart;
+  if (!start) return null;
+  const year = parseInt(start.slice(0, 4), 10);
+  if (!Number.isFinite(year)) return null;
+  const now = new Date().getUTCFullYear();
+  const yearsServed = Math.max(0, now - year);
+  const chamberLabel = leg.chamber === "Senate" ? "Senator" : "Representative";
+  const shortLabel =
+    yearsServed >= 1
+      ? `${chamberLabel} since ${year} (${yearsServed} ${yearsServed === 1 ? "yr" : "yrs"})`
+      : `${chamberLabel} since ${year}`;
+  return { yearStarted: year, yearsServed, shortLabel };
 }
 
 export async function fetchCurrentLegislators(): Promise<Legislator[]> {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   PARTY_COLORS,
   getLegislatorElectionCycle,
+  formatTenure,
   type Legislator,
   type Party,
 } from "@/lib/data/legislators";
@@ -17,6 +18,7 @@ import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
 import OutsideSpendingSection from "@/components/OutsideSpendingSection";
+import StockTradesSection from "@/components/StockTradesSection";
 
 type AlignmentResult = {
   bioguide: string;
@@ -1267,59 +1269,77 @@ function LegislatorRow({
           {(() => {
             const salary = getGovernmentSalary(leg.bioguide);
             const netWorth = getNetWorth(leg.bioguide);
+            const tenure = formatTenure(leg);
             return (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  fontSize: 11,
-                  color: "rgba(244,244,245,0.6)",
-                  marginBottom: 4,
-                  lineHeight: 1.4,
-                }}
-              >
-                <span>
-                  Salary:{" "}
-                  <strong
-                    style={{ color: "rgba(244,244,245,0.88)", fontWeight: 700 }}
+              <>
+                {tenure ? (
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(244,244,245,0.65)",
+                      marginBottom: 3,
+                      lineHeight: 1.4,
+                    }}
                   >
-                    {formatFinancialShort(salary)}
-                  </strong>
-                </span>
-                <span style={{ color: "rgba(244,244,245,0.25)" }}>·</span>
-                {netWorth ? (
+                    {tenure.shortLabel}
+                  </div>
+                ) : null}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    fontSize: 11,
+                    color: "rgba(244,244,245,0.6)",
+                    marginBottom: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
                   <span>
-                    Net worth:{" "}
+                    Salary:{" "}
                     <strong
                       style={{
                         color: "rgba(244,244,245,0.88)",
                         fontWeight: 700,
                       }}
                     >
-                      {formatFinancialShort(netWorth.estimate)}
-                    </strong>{" "}
-                    <a
-                      href={netWorth.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        color: "rgba(196,181,253,0.7)",
-                        textDecoration: "underline",
-                        fontSize: 10,
-                      }}
-                    >
-                      ({netWorth.sourceLabel} {netWorth.year})
-                    </a>
+                      {formatFinancialShort(salary)}
+                    </strong>
                   </span>
-                ) : (
-                  <span style={{ color: "rgba(244,244,245,0.4)" }}>
-                    Net worth: not on file
-                  </span>
-                )}
-              </div>
+                  <span style={{ color: "rgba(244,244,245,0.25)" }}>·</span>
+                  {netWorth ? (
+                    <span>
+                      Net worth:{" "}
+                      <strong
+                        style={{
+                          color: "rgba(244,244,245,0.88)",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {formatFinancialShort(netWorth.estimate)}
+                      </strong>{" "}
+                      <a
+                        href={netWorth.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          color: "rgba(196,181,253,0.7)",
+                          textDecoration: "underline",
+                          fontSize: 10,
+                        }}
+                      >
+                        ({netWorth.sourceLabel} {netWorth.year})
+                      </a>
+                    </span>
+                  ) : (
+                    <span style={{ color: "rgba(244,244,245,0.4)" }}>
+                      Net worth: not on file
+                    </span>
+                  )}
+                </div>
+              </>
             );
           })()}
           <div
@@ -1460,6 +1480,20 @@ function LegislatorRow({
               Outside spending (Super PACs)
             </div>
             <OutsideSpendingSection leg={leg} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
+              }}
+            >
+              Stock trades (STOCK Act disclosures)
+            </div>
+            <StockTradesSection leg={leg} />
           </div>
         </div>
       ) : null}
