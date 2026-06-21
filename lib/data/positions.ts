@@ -1143,6 +1143,434 @@ export const STANCES: Record<string, StanceTable> = {
       sourceLabel: "mullin.senate.gov",
     },
   },
+
+  // ── Round 2 expansion (Reddit-launch coverage) ───────────────────────
+  // High-profile senators most likely to be looked up right after the
+  // r/moderatepolitics post lands. Added 2026-06-21.
+
+  // Chris Murphy — CT — Democrat (gun-safety lead negotiator)
+  M001169: {
+    gun_safety: {
+      direction: "favors",
+      statement:
+        "Lead Democratic negotiator of the 2022 Bipartisan Safer Communities Act, the most significant federal gun-safety law in 30 years.",
+      source: "https://www.murphy.senate.gov/issues/gun-violence",
+      sourceLabel: "murphy.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.murphy.senate.gov/issues/health-care",
+      sourceLabel: "murphy.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports expanding the Affordable Care Act and lowering drug prices.",
+      source: "https://www.murphy.senate.gov/issues/health-care",
+      sourceLabel: "murphy.senate.gov",
+    },
+  },
+
+  // Richard Blumenthal — CT — Democrat
+  B001277: {
+    gun_safety: {
+      direction: "favors",
+      statement: "Long-time advocate of universal background checks and an assault weapons ban.",
+      source: "https://www.blumenthal.senate.gov/about/issues/gun-violence-prevention",
+      sourceLabel: "blumenthal.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Co-sponsored the Women's Health Protection Act.",
+      source: "https://www.blumenthal.senate.gov/about/issues/health-care",
+      sourceLabel: "blumenthal.senate.gov",
+    },
+  },
+
+  // Sheldon Whitehouse — RI — Democrat (climate hawk)
+  W000802: {
+    climate_action: {
+      direction: "favors",
+      statement:
+        "Gave the 'Time to Wake Up' climate floor speech series weekly for 10+ years; lead climate-policy voice in the Senate.",
+      source: "https://www.whitehouse.senate.gov/issues/climate-change",
+      sourceLabel: "whitehouse.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.whitehouse.senate.gov/issues/health-care",
+      sourceLabel: "whitehouse.senate.gov",
+    },
+  },
+
+  // Jack Reed — RI — Democrat
+  R000122: {
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting and expanding the Affordable Care Act.",
+      source: "https://www.reed.senate.gov/issues/health-care",
+      sourceLabel: "reed.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.reed.senate.gov/issues/health-care",
+      sourceLabel: "reed.senate.gov",
+    },
+  },
+
+  // Brian Schatz — HI — Democrat (climate)
+  S001194: {
+    climate_action: {
+      direction: "favors",
+      statement: "Lead author of multiple clean-energy and climate-action bills.",
+      source: "https://www.schatz.senate.gov/issues/climate-change",
+      sourceLabel: "schatz.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.schatz.senate.gov/issues/health-care",
+      sourceLabel: "schatz.senate.gov",
+    },
+  },
+
+  // Mazie Hirono — HI — Democrat
+  H001042: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Vocal advocate for federal protection of abortion rights.",
+      source: "https://www.hirono.senate.gov/priorities",
+      sourceLabel: "hirono.senate.gov",
+    },
+    immigration_reform: {
+      direction: "favors",
+      statement: "Supports path to citizenship for Dreamers and TPS holders.",
+      source: "https://www.hirono.senate.gov/priorities",
+      sourceLabel: "hirono.senate.gov",
+    },
+  },
+
+  // Ed Markey — MA — Democrat (Green New Deal co-author)
+  M000133: {
+    climate_action: {
+      direction: "favors",
+      statement: "Co-author of the Green New Deal resolution with Rep. Ocasio-Cortez.",
+      source: "https://www.markey.senate.gov/issues/climate-and-environment",
+      sourceLabel: "markey.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.markey.senate.gov/issues/health-care",
+      sourceLabel: "markey.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement: "Supports universal background checks and assault weapons ban.",
+      source: "https://www.markey.senate.gov/issues/gun-violence-prevention",
+      sourceLabel: "markey.senate.gov",
+    },
+  },
+
+  // Dick Durbin — IL — Democrat (Senate Judiciary, DREAM Act original co-author)
+  D000563: {
+    immigration_reform: {
+      direction: "favors",
+      statement:
+        "Original co-author of the DREAM Act in 2001; long-time advocate for path to citizenship.",
+      source: "https://www.durbin.senate.gov/issues/immigration",
+      sourceLabel: "durbin.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.durbin.senate.gov/issues/health-care",
+      sourceLabel: "durbin.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement: "Supports universal background checks and assault weapons ban.",
+      source: "https://www.durbin.senate.gov/issues/gun-violence",
+      sourceLabel: "durbin.senate.gov",
+    },
+  },
+
+  // Tammy Duckworth — IL — Democrat
+  D000622: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.duckworth.senate.gov/about-tammy/issues",
+      sourceLabel: "duckworth.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports protecting and expanding the ACA.",
+      source: "https://www.duckworth.senate.gov/about-tammy/issues",
+      sourceLabel: "duckworth.senate.gov",
+    },
+  },
+
+  // Jon Ossoff — GA — Democrat
+  O000174: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.ossoff.senate.gov/issues/",
+      sourceLabel: "ossoff.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports lowering drug prices and protecting the ACA.",
+      source: "https://www.ossoff.senate.gov/issues/",
+      sourceLabel: "ossoff.senate.gov",
+    },
+  },
+
+  // Jacky Rosen — NV — Democrat
+  R000608: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.rosen.senate.gov/issues/health-care/",
+      sourceLabel: "rosen.senate.gov",
+    },
+  },
+
+  // Peter Welch — VT — Democrat
+  W000800: {
+    climate_action: {
+      direction: "favors",
+      statement: "Long-time advocate for federal climate action.",
+      source: "https://www.welch.senate.gov/about/issues/",
+      sourceLabel: "welch.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "favors",
+      statement: "Supports expanding Medicare and lowering drug prices.",
+      source: "https://www.welch.senate.gov/about/issues/",
+      sourceLabel: "welch.senate.gov",
+    },
+  },
+
+  // Angus King — ME — Independent (caucuses with Democrats)
+  K000383: {
+    climate_action: {
+      direction: "favors",
+      statement: "Supports clean-energy investment and federal climate policy.",
+      source: "https://www.king.senate.gov/issues/",
+      sourceLabel: "king.senate.gov",
+    },
+  },
+
+  // Tina Smith — MN — Democrat (reproductive rights leader)
+  S001203: {
+    abortion_rights: {
+      direction: "favors",
+      statement:
+        "Former Planned Parenthood executive; prominent voice in the Senate on reproductive rights.",
+      source: "https://www.smith.senate.gov/about-tina/issues/",
+      sourceLabel: "smith.senate.gov",
+    },
+    climate_action: {
+      direction: "favors",
+      statement: "Supports federal climate-action legislation.",
+      source: "https://www.smith.senate.gov/about-tina/issues/",
+      sourceLabel: "smith.senate.gov",
+    },
+  },
+
+  // Gary Peters — MI — Democrat
+  P000595: {
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.peters.senate.gov/about/issues",
+      sourceLabel: "peters.senate.gov",
+    },
+  },
+
+  // Chris Van Hollen — MD — Democrat
+  V000128: {
+    climate_action: {
+      direction: "favors",
+      statement: "Supports federal climate-action legislation.",
+      source: "https://www.vanhollen.senate.gov/issues",
+      sourceLabel: "vanhollen.senate.gov",
+    },
+    abortion_rights: {
+      direction: "favors",
+      statement: "Supports federal codification of Roe v. Wade.",
+      source: "https://www.vanhollen.senate.gov/issues",
+      sourceLabel: "vanhollen.senate.gov",
+    },
+  },
+
+  // John Cornyn — TX — Republican (Senate Judiciary, former Republican Whip)
+  C001056: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record; supports federal restrictions.",
+      source: "https://www.cornyn.senate.gov/issues/",
+      sourceLabel: "cornyn.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement: "Supports border-enforcement-first approach; opposes amnesty proposals.",
+      source: "https://www.cornyn.senate.gov/issues/",
+      sourceLabel: "cornyn.senate.gov",
+    },
+    gun_safety: {
+      direction: "favors",
+      statement:
+        "Lead Republican negotiator of the 2022 Bipartisan Safer Communities Act — broke with most of his caucus to support modest reforms.",
+      source:
+        "https://www.cornyn.senate.gov/news/cornyn-announces-bipartisan-deal-on-gun-safety/",
+      sourceLabel: "cornyn.senate.gov",
+    },
+  },
+
+  // Tim Scott — SC — Republican
+  S001184: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.scott.senate.gov/about/issues",
+      sourceLabel: "scott.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "opposes",
+      statement: "Supports repealing the Affordable Care Act.",
+      source: "https://www.scott.senate.gov/about/issues",
+      sourceLabel: "scott.senate.gov",
+    },
+  },
+
+  // Marsha Blackburn — TN — Republican
+  B001243: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Strong pro-life record; supports federal abortion restrictions.",
+      source: "https://www.blackburn.senate.gov/about-marsha/issues",
+      sourceLabel: "blackburn.senate.gov",
+    },
+    gun_safety: {
+      direction: "opposes",
+      statement: "Strong Second Amendment defender; opposes new federal gun restrictions.",
+      source: "https://www.blackburn.senate.gov/about-marsha/issues",
+      sourceLabel: "blackburn.senate.gov",
+    },
+  },
+
+  // Rick Scott — FL — Republican
+  S001217: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.rickscott.senate.gov/issues",
+      sourceLabel: "rickscott.senate.gov",
+    },
+    healthcare_expansion: {
+      direction: "opposes",
+      statement: "Long-time opponent of the Affordable Care Act.",
+      source: "https://www.rickscott.senate.gov/issues",
+      sourceLabel: "rickscott.senate.gov",
+    },
+  },
+
+  // Ron Johnson — WI — Republican (climate skeptic)
+  J000293: {
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Public climate skeptic; opposes federal climate regulations and emissions-reduction mandates.",
+      source: "https://www.ronjohnson.senate.gov/issues",
+      sourceLabel: "ronjohnson.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.ronjohnson.senate.gov/issues",
+      sourceLabel: "ronjohnson.senate.gov",
+    },
+  },
+
+  // Eric Schmitt — MO — Republican
+  S001214: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.schmitt.senate.gov/issues",
+      sourceLabel: "schmitt.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement: "Supports border-enforcement-first approach.",
+      source: "https://www.schmitt.senate.gov/issues",
+      sourceLabel: "schmitt.senate.gov",
+    },
+  },
+
+  // John Hoeven — ND — Republican
+  H001061: {
+    climate_action: {
+      direction: "opposes",
+      statement:
+        "Opposes federal climate regulations; advocates for North Dakota fossil fuel industry.",
+      source: "https://www.hoeven.senate.gov/issues/energy-and-natural-resources",
+      sourceLabel: "hoeven.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.hoeven.senate.gov/issues",
+      sourceLabel: "hoeven.senate.gov",
+    },
+  },
+
+  // Kevin Cramer — ND — Republican
+  C001096: {
+    climate_action: {
+      direction: "opposes",
+      statement: "Opposes federal climate regulations; supports oil and gas development.",
+      source: "https://www.cramer.senate.gov/issues",
+      sourceLabel: "cramer.senate.gov",
+    },
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.cramer.senate.gov/issues",
+      sourceLabel: "cramer.senate.gov",
+    },
+  },
+
+  // Pete Ricketts — NE — Republican
+  R000584: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.ricketts.senate.gov/about/issues",
+      sourceLabel: "ricketts.senate.gov",
+    },
+  },
+
+  // Bill Hagerty — TN — Republican
+  H001088: {
+    abortion_rights: {
+      direction: "opposes",
+      statement: "Pro-life voting record.",
+      source: "https://www.hagerty.senate.gov/issues/",
+      sourceLabel: "hagerty.senate.gov",
+    },
+    immigration_reform: {
+      direction: "opposes",
+      statement: "Border-enforcement-first; opposes amnesty proposals.",
+      source: "https://www.hagerty.senate.gov/issues/",
+      sourceLabel: "hagerty.senate.gov",
+    },
+  },
 };
 
 export function getStancesForBioguide(bioguide: string): StanceTable {
