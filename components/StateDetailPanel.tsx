@@ -22,6 +22,7 @@ import StockTradesSection from "@/components/StockTradesSection";
 import CommitteesSection from "@/components/CommitteesSection";
 import BillsSection from "@/components/BillsSection";
 import GovernorSection from "@/components/GovernorSection";
+import CollapsibleSection from "@/components/CollapsibleSection";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
 import VoterInfoSection from "@/components/VoterInfoSection";
@@ -1410,125 +1411,37 @@ function LegislatorRow({
       {expanded ? (
         <div
           style={{
-            padding: "0 12px 14px",
+            padding: "10px 12px 14px",
             borderTop: "1px solid rgba(255,255,255,0.05)",
             display: "flex",
             flexDirection: "column",
-            gap: 14,
+            gap: 8,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "10px 0 6px",
-              }}
-            >
-              Committee assignments
-            </div>
+          <CollapsibleSection title="Committee assignments">
             <CommitteesSection bioguide={leg.bioguide} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Sponsored bills
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Sponsored bills">
             <BillsSection bioguide={leg.bioguide} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Statement-vote alignment
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Statement-vote alignment">
             <AlignmentBadge leg={leg} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Constituent-vote alignment
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Constituent-vote alignment">
             <ConstituentAlignmentBadge leg={leg} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Recent roll-call votes
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Recent roll-call votes">
             <VotesList bioguide={leg.bioguide} chamber={leg.chamber} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Top donors (FEC public record)
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Top donors (FEC public record)">
             <DonorPanel leg={leg} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Outside spending (Super PACs)
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Outside spending (Super PACs)">
             <OutsideSpendingSection leg={leg} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 10.5,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                color: "rgba(244,244,245,0.4)",
-                padding: "0 0 6px",
-              }}
-            >
-              Stock trades (STOCK Act disclosures)
-            </div>
+          </CollapsibleSection>
+          <CollapsibleSection title="Stock trades (STOCK Act disclosures)">
             <StockTradesSection leg={leg} />
-          </div>
+          </CollapsibleSection>
         </div>
       ) : null}
     </div>
