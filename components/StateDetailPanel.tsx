@@ -102,16 +102,11 @@ function VotesList({
 
   useEffect(() => {
     let cancelled = false;
-    if (chamber === "House") {
-      // We haven't ingested the H-chamber Voteview files yet — show a
-      // clean placeholder rather than fire a request that returns empty.
-      setState({ status: "ready", votes: [] });
-      return;
-    }
     setState({ status: "loading" });
     (async () => {
       try {
-        const res = await fetch(`/api/votes/${bioguide}`);
+        const url = `/api/votes/${bioguide}?chamber=${encodeURIComponent(chamber)}`;
+        const res = await fetch(url);
         const body = await res.json();
         if (cancelled) return;
         if (!res.ok) {
@@ -132,24 +127,6 @@ function VotesList({
       cancelled = true;
     };
   }, [bioguide, chamber]);
-
-  if (chamber === "House") {
-    return (
-      <div
-        style={{
-          padding: "10px 12px",
-          borderRadius: 8,
-          background: "rgba(255,255,255,0.02)",
-          border: "1px dashed rgba(255,255,255,0.08)",
-          fontSize: 12,
-          color: "rgba(244,244,245,0.55)",
-          lineHeight: 1.55,
-        }}
-      >
-        House voting records coming next. Senate records are live.
-      </div>
-    );
-  }
 
   if (state.status === "loading") {
     return (

@@ -26,14 +26,17 @@ const ROLLCALLS_URL = (chamber: "S" | "H", congress: number) =>
 const VOTES_URL = (chamber: "S" | "H", congress: number) =>
   `${VOTEVIEW_BASE}/votes/${chamber}${congress}_votes.csv`;
 
-// Which Congresses we load up-front. 119 = current (2025-2027), 118 =
-// previous (2023-2025). Both for context; recent UI defaults to the
-// last 15 votes regardless of Congress boundary.
-const CONGRESSES_TO_LOAD: Array<{ congress: number; chamber: "S" | "H" }> = [
-  { congress: 119, chamber: "S" },
-  { congress: 118, chamber: "S" },
-  // House will be added after Senate is verified end-to-end.
-];
+// Per-chamber list of Congresses we'll pull. 119 = current (2025-2027),
+// 118 = previous (2023-2025). The House votes file for one Congress is
+// ~14 MB; loading both chambers up front balloons cold-start memory and
+// time. Instead getRecentVotesByBioguide only loads the chamber it
+// actually needs, scoped down further by the caller's `chamber` arg
+// when passed (the panel already knows the chamber from the legislator
+// row it's expanding).
+const CONGRESSES_BY_CHAMBER: Record<"S" | "H", number[]> = {
+  S: [119, 118],
+  H: [119, 118],
+};
 
 export type CastCode = "Yea" | "Nay" | "Present" | "Not Voting" | "Other";
 
@@ -217,45 +220,57 @@ async function loadCongress(chamber: "S" | "H", congress: number): Promise<void>
 
 export async function getRecentVotesByBioguide(
   bioguide: string,
-  limit = 15
+  options: { chamber?: "Senate" | "House"; limit?: number } = {}
 ): Promise<LegislatorVote[]> {
+  const limit = options.limit ?? 15;
   const bioguideToIcpsr = await loadBioguideToIcpsr();
   const icpsr = bioguideToIcpsr.get(bioguide.trim());
   if (!icpsr) return [];
 
-  // Load all configured Congresses in parallel. Once they're cached the
-  // second call is a no-op.
-  await Promise.all(
-    CONGRESSES_TO_LOAD.map((c) => loadCongress(c.chamber, c.congress))
-  );
+  // If the caller already knows the chamber (the panel always does),
+  // restrict to just that chamber's CSVs so we don't pull 14 MB of
+  // House data to answer a Senate query.
+  const chambersToLoad: Array<"S" | "H"> = options.chamber
+    ? [options.chamber === "Senate" ? "S" : "H"]
+    : ["S", "H"];
+
+  const loads: Promise<void>[] = [];
+  for (const ch of chambersToLoad) {
+    for (const congress of CONGRESSES_BY_CHAMBER[ch]) {
+      loads.push(loadCongress(ch, congress));
+    }
+  }
+  await Promise.all(loads);
 
   const allVotes: LegislatorVote[] = [];
-  for (const { chamber, congress } of CONGRESSES_TO_LOAD) {
-    const key = cacheKey(chamber, congress);
-    const byIcpsr = votesByIcpsrCache.get(key);
-    const rollcalls = rollcallsCache.get(key);
-    if (!byIcpsr || !rollcalls) continue;
-    const memberVotes = byIcpsr.get(icpsr);
-    if (!memberVotes) continue;
+  for (const ch of chambersToLoad) {
+    for (const congress of CONGRESSES_BY_CHAMBER[ch]) {
+      const key = cacheKey(ch, congress);
+      const byIcpsr = votesByIcpsrCache.get(key);
+      const rollcalls = rollcallsCache.get(key);
+      if (!byIcpsr || !rollcalls) continue;
+      const memberVotes = byIcpsr.get(icpsr);
+      if (!memberVotes) continue;
 
-    for (const v of memberVotes) {
-      const rollnumber = Number(v.rollnumber);
-      if (!Number.isFinite(rollnumber)) continue;
-      const meta = rollcalls.get(rollnumber);
-      if (!meta) continue;
-      allVotes.push({
-        congress: Number(meta.congress),
-        chamber: chamber === "S" ? "Senate" : "House",
-        rollnumber,
-        date: (meta.date || "").trim(),
-        billNumber: normalizeBillNumber(meta.bill_number),
-        voteQuestion: (meta.vote_question || "").trim(),
-        voteDesc: (meta.vote_desc || "").trim(),
-        voteResult: (meta.vote_result || "").trim(),
-        yeaCount: Number(meta.yea_count) || 0,
-        nayCount: Number(meta.nay_count) || 0,
-        cast: decodeCast(v.cast_code),
-      });
+      for (const v of memberVotes) {
+        const rollnumber = Number(v.rollnumber);
+        if (!Number.isFinite(rollnumber)) continue;
+        const meta = rollcalls.get(rollnumber);
+        if (!meta) continue;
+        allVotes.push({
+          congress: Number(meta.congress),
+          chamber: ch === "S" ? "Senate" : "House",
+          rollnumber,
+          date: (meta.date || "").trim(),
+          billNumber: normalizeBillNumber(meta.bill_number),
+          voteQuestion: (meta.vote_question || "").trim(),
+          voteDesc: (meta.vote_desc || "").trim(),
+          voteResult: (meta.vote_result || "").trim(),
+          yeaCount: Number(meta.yea_count) || 0,
+          nayCount: Number(meta.nay_count) || 0,
+          cast: decodeCast(v.cast_code),
+        });
+      }
     }
   }
 
