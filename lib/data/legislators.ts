@@ -46,6 +46,10 @@ export type Legislator = {
   termStart: string; // ISO date of current term start
   termEnd: string; // ISO date of current term end
   portraitUrl: string; // 225x275 default; .replace("/225x275/", "/450x550/") for larger
+  // FEC candidate IDs for this person across their career (most recent first
+  // after normalization). H-prefix = House campaign, S-prefix = Senate. Used
+  // by the donor pipeline to look up a member's principal campaign committee.
+  fecIds: string[];
 };
 
 // Raw record shape from legislators-current.json. We type only the fields we
@@ -53,6 +57,7 @@ export type Legislator = {
 // doesn't break us.
 type RawId = {
   bioguide?: string;
+  fec?: string[];
 };
 
 type RawName = {
@@ -119,6 +124,17 @@ function normalize(raw: RawLegislator): Legislator | null {
       ? districtRaw
       : null;
 
+  // Sort FEC IDs so the chamber matching the current seat comes first; the
+  // donor lookup will iterate this list trying each id until one resolves to
+  // a principal campaign committee.
+  const fecIds = Array.isArray(raw.id?.fec) ? raw.id!.fec.slice() : [];
+  const chamberPrefix = chamber === "Senate" ? "S" : "H";
+  fecIds.sort((a, b) => {
+    const aMatch = a.startsWith(chamberPrefix) ? 0 : 1;
+    const bMatch = b.startsWith(chamberPrefix) ? 0 : 1;
+    return aMatch - bMatch;
+  });
+
   return {
     bioguide,
     fullName,
@@ -135,6 +151,7 @@ function normalize(raw: RawLegislator): Legislator | null {
     termStart: currentTerm.start || "",
     termEnd: currentTerm.end || "",
     portraitUrl: buildPortraitUrl(bioguide),
+    fecIds,
   };
 }
 

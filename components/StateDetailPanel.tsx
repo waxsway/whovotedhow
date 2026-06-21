@@ -8,6 +8,8 @@ import {
 } from "@/lib/data/legislators";
 import { stateByCode } from "@/lib/data/states";
 import type { LegislatorVote, CastCode } from "@/lib/data/votes";
+import type { DonorReport } from "@/lib/data/donors";
+import DonorBubbleChart from "@/components/DonorBubbleChart";
 
 function partyLabel(p: Party): string {
   switch (p) {
@@ -238,6 +240,80 @@ function VotesList({
   );
 }
 
+function DonorPanel({ leg }: { leg: Legislator }) {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; report: DonorReport }
+    | { status: "error"; message: string }
+  >({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (leg.fecIds.length === 0) {
+      setState({
+        status: "error",
+        message:
+          "No FEC candidate IDs on file for this legislator (rare; usually a newly-seated member).",
+      });
+      return;
+    }
+    setState({ status: "loading" });
+    (async () => {
+      try {
+        const fec = leg.fecIds.join(",");
+        const res = await fetch(
+          `/api/donors/${leg.bioguide}?fec=${encodeURIComponent(fec)}`
+        );
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({
+            status: "error",
+            message: body?.error || "Request failed",
+          });
+          return;
+        }
+        setState({ status: "ready", report: body as DonorReport });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setState({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leg.bioguide, leg.fecIds]);
+
+  if (state.status === "loading") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "6px 2px",
+        }}
+      >
+        Loading donor data from FEC…
+      </div>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <div style={{ fontSize: 12, color: "#fca5a5", padding: "6px 2px" }}>
+        Could not load donors: {state.message}
+      </div>
+    );
+  }
+  return (
+    <DonorBubbleChart
+      report={state.report}
+      portraitUrl={leg.portraitUrl}
+      legislatorName={leg.fullName}
+    />
+  );
+}
+
 function LegislatorRow({ leg }: { leg: Legislator }) {
   const color = PARTY_COLORS[leg.party];
   const [expanded, setExpanded] = useState(false);
@@ -337,7 +413,7 @@ function LegislatorRow({ leg }: { leg: Legislator }) {
             }}
           >
             <span>Alignment score: coming soon</span>
-            <span>Donor map: coming soon</span>
+            <span>Votes + donors: expand below</span>
           </div>
         </div>
         <div
@@ -355,22 +431,41 @@ function LegislatorRow({ leg }: { leg: Legislator }) {
       {expanded ? (
         <div
           style={{
-            padding: "0 12px 12px",
+            padding: "0 12px 14px",
             borderTop: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
           }}
         >
-          <div
-            style={{
-              fontSize: 10.5,
-              textTransform: "uppercase",
-              letterSpacing: 0.6,
-              color: "rgba(244,244,245,0.4)",
-              padding: "10px 0 6px",
-            }}
-          >
-            Recent roll-call votes
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "10px 0 6px",
+              }}
+            >
+              Recent roll-call votes
+            </div>
+            <VotesList bioguide={leg.bioguide} chamber={leg.chamber} />
           </div>
-          <VotesList bioguide={leg.bioguide} chamber={leg.chamber} />
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
+              }}
+            >
+              Top donors (FEC public record)
+            </div>
+            <DonorPanel leg={leg} />
+          </div>
         </div>
       ) : null}
     </div>
@@ -561,7 +656,7 @@ export default function StateDetailPanel({
         }}
       >
         Roster: unitedstates/congress-legislators · Portraits:
-        theunitedstates.io · Votes: voteview.com
+        theunitedstates.io · Votes: voteview.com · Donors: fec.gov
       </footer>
     </aside>
   );
