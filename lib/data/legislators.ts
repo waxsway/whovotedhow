@@ -218,3 +218,15 @@ export const PARTY_COLORS: Record<Party, string> = {
   I: "#a855f7", // purple-500
   Other: "#94a3b8", // slate-400
 };
+
+// Server-side helper: fetch the roster (uses the same caching path as the
+// client fetcher because Next.js fetch with revalidate dedupes both ways)
+// and find a single legislator by bioguide. Returns null if not found.
+// Used by the per-legislator generateMetadata + opengraph-image route
+// generators to render rich social-share previews.
+export async function findLegislatorByBioguide(
+  bioguide: string
+): Promise<Legislator | null> {
+  const list = await fetchCurrentLegislators();
+  return list.find((l) => l.bioguide === bioguide) ?? null;
+}
