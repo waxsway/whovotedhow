@@ -28,12 +28,12 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description:
-    "A free, deterministic transparency tool. 3D map of the United States showing every politician, their voting record, donors, and where their public statements diverge from how they actually vote.",
+    "Votes, donors, stock trades, sponsored bills, committee assignments, and the federal judges who hear cases from your state. Every member of Congress, every state. Free, sourced, no signup.",
   openGraph: {
     type: "website",
     title: "Who Voted How — Free Political Accountability Map",
     description:
-      "Recent votes, top FEC donors, and a public-record profile for every member of the US Congress.",
+      "Votes, donors, stock trades, sponsored bills, committees, and federal judges — for every member of Congress and every state. Free, sourced, no signup.",
     url: "https://whovotedhow.org",
     siteName: "Who Voted How",
   },
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Who Voted How — Free Political Accountability Map",
     description:
-      "Recent votes, top FEC donors, and a public-record profile for every member of the US Congress.",
+      "Votes, donors, stock trades, sponsored bills, committees, judges — every member of Congress and every state. Free, sourced.",
   },
 };
 

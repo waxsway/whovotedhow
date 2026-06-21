@@ -64,17 +64,18 @@ export default async function Image() {
         </div>
         <div
           style={{
-            fontSize: 30,
+            fontSize: 28,
             color: "rgba(244,244,245,0.7)",
             marginTop: 22,
-            maxWidth: 880,
-            lineHeight: 1.3,
+            maxWidth: 980,
+            lineHeight: 1.35,
             display: "flex",
             textAlign: "center",
           }}
         >
-          Free political accountability map. Recent votes, top FEC donors, and
-          a public-record profile for every member of the US Congress.
+          Votes, donors, stock trades, sponsored bills, committees, and
+          federal judges — every member of Congress and every state. Free,
+          sourced, no signup.
         </div>
         <div
           style={{
