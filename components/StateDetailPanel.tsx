@@ -314,9 +314,22 @@ function DonorPanel({ leg }: { leg: Legislator }) {
   );
 }
 
-function LegislatorRow({ leg }: { leg: Legislator }) {
+function LegislatorRow({
+  leg,
+  defaultExpanded = false,
+}: {
+  leg: Legislator;
+  defaultExpanded?: boolean;
+}) {
   const color = PARTY_COLORS[leg.party];
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  // If a deep-link surfaces this row after first mount (the panel always
+  // mounts before legislators data is ready, so initial defaultExpanded is
+  // false), respect the change to defaultExpanded once it flips true.
+  useEffect(() => {
+    if (defaultExpanded) setExpanded(true);
+  }, [defaultExpanded]);
 
   return (
     <div
@@ -476,10 +489,15 @@ export default function StateDetailPanel({
   selectedState,
   legislators,
   onClose,
+  defaultExpandedBioguide,
 }: {
   selectedState: string | null;
   legislators: Legislator[];
   onClose: () => void;
+  // When set and matching a row, that row starts expanded. Used for the
+  // /legislator/{bioguide} deep-link route so a shared URL opens the
+  // exact card the sharer wanted to surface.
+  defaultExpandedBioguide?: string | null;
 }) {
   if (!selectedState) return null;
   const state = stateByCode(selectedState);
@@ -605,7 +623,11 @@ export default function StateDetailPanel({
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {senators.map((s) => (
-                <LegislatorRow key={s.bioguide} leg={s} />
+                <LegislatorRow
+                  key={s.bioguide}
+                  leg={s}
+                  defaultExpanded={s.bioguide === defaultExpandedBioguide}
+                />
               ))}
             </div>
           </section>
@@ -626,7 +648,11 @@ export default function StateDetailPanel({
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {reps.map((r) => (
-                <LegislatorRow key={r.bioguide} leg={r} />
+                <LegislatorRow
+                  key={r.bioguide}
+                  leg={r}
+                  defaultExpanded={r.bioguide === defaultExpandedBioguide}
+                />
               ))}
             </div>
           </section>
