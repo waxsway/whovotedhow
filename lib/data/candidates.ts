@@ -236,7 +236,16 @@ async function fetchCandidatesForState(
       party: party.code,
       partyLabel: party.label,
       challengeRole: role,
-      electionYear: r.election_years?.[0] ?? cycle,
+      // FEC's election_years may contain multiple cycles for a candidate
+      // whose committee spans elections (e.g. someone who ran 2024 and
+      // re-filed for 2026). When the cycle we're filtering for is present,
+      // surface that one — otherwise fall back to the most recent.
+      electionYear:
+        r.election_years?.includes(cycle)
+          ? cycle
+          : (r.election_years && r.election_years.length > 0
+              ? Math.max(...r.election_years)
+              : cycle),
       principalCommitteeId: principal?.committee_id || null,
       principalCommitteeName: principal?.name || null,
       firstFiled: r.first_file_date || null,
