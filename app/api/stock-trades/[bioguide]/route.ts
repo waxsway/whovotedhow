@@ -6,7 +6,9 @@ import { getStockTradesByBioguide } from "@/lib/data/stock-trades";
 // efdsearch.senate.gov, House: disclosures-clerk.house.gov).
 
 export const runtime = "nodejs";
-export const revalidate = 3600 * 6; // 6h: disclosures land in batches
+// 6 hours in seconds (literal — Next.js static analysis can't evaluate
+// `3600 * 6` as a segment config value).
+export const revalidate = 21600;
 
 const BIOGUIDE_RE = /^[A-Z][0-9]{6}$/;
 
