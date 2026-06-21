@@ -19,6 +19,7 @@ import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
 import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 import StockTradesSection from "@/components/StockTradesSection";
+import CommitteesSection from "@/components/CommitteesSection";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
 import VoterInfoSection from "@/components/VoterInfoSection";
@@ -1422,6 +1423,20 @@ function LegislatorRow({
                 letterSpacing: 0.6,
                 color: "rgba(244,244,245,0.4)",
                 padding: "10px 0 6px",
+              }}
+            >
+              Committee assignments
+            </div>
+            <CommitteesSection bioguide={leg.bioguide} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
               }}
             >
               Statement-vote alignment
