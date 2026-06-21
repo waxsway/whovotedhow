@@ -60,6 +60,7 @@ type MemberRow = {
   chamber: string;
   icpsr: string;
   bioguide_id: string;
+  party_code: string;
 };
 
 type RollcallRow = {
@@ -121,6 +122,22 @@ const rollcallsCache = new Map<string, Map<number, RollcallRow>>();
 const votesByIcpsrCache = new Map<string, Map<string, VoteRow[]>>();
 const congressLoadPromises = new Map<string, Promise<void>>();
 
+// icpsr -> simplified party per congress, used for party-line alignment.
+// Voteview's party_code values: 100-199 = Democratic family, 200-299 =
+// Republican family, others = third-party / independent. We collapse to
+// 'D' / 'R' / 'I' to match the legislator type, treating anything not
+// in the two-party majority buckets as Independent.
+const partyByIcpsrCache = new Map<string, Map<string, "D" | "R" | "I">>();
+
+// Lazy cache of party majority per rollcall ("Yea"/"Nay"/"Split"). Computed
+// the first time alignment is asked for and shared across all subsequent
+// requests in the same server process.
+type PartyPosition = "Yea" | "Nay" | "Split";
+const partyMajoritiesCache = new Map<
+  string, // chamber+congress+rollnumber
+  { D: PartyPosition; R: PartyPosition; I: PartyPosition }
+>();
+
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, {
     // Voteview serves these files with cache headers Vercel will respect;
@@ -174,6 +191,41 @@ async function loadBioguideToIcpsr(): Promise<Map<string, string>> {
 
 function cacheKey(chamber: "S" | "H", congress: number): string {
   return `${chamber}${congress}`;
+}
+
+function partyCodeToSimple(code: string): "D" | "R" | "I" {
+  const n = Number(code);
+  if (!Number.isFinite(n)) return "I";
+  if (n >= 100 && n < 200) return "D";
+  if (n >= 200 && n < 300) return "R";
+  return "I";
+}
+
+// Build (icpsr -> party) for one congress+chamber by scanning the global
+// HSall_members rows we already have to fetch for the bioguide map. We
+// keep this in a separate cache because the latest-bioguide-to-icpsr map
+// doesn't preserve which congress the icpsr was tied to. Voteview's
+// chamber column in HSall_members uses "House" / "Senate".
+async function loadPartiesForCongress(
+  chamber: "S" | "H",
+  congress: number
+): Promise<Map<string, "D" | "R" | "I">> {
+  const key = cacheKey(chamber, congress);
+  const existing = partyByIcpsrCache.get(key);
+  if (existing) return existing;
+  const text = await fetchText(MEMBERS_URL);
+  const rows = parseCsv<MemberRow>(text);
+  const chamberFull = chamber === "S" ? "Senate" : "House";
+  const m = new Map<string, "D" | "R" | "I">();
+  for (const row of rows) {
+    if (Number(row.congress) !== congress) continue;
+    if ((row.chamber || "").trim() !== chamberFull) continue;
+    const icpsr = (row.icpsr || "").trim();
+    if (!icpsr) continue;
+    m.set(icpsr, partyCodeToSimple(row.party_code));
+  }
+  partyByIcpsrCache.set(key, m);
+  return m;
 }
 
 async function loadCongress(chamber: "S" | "H", congress: number): Promise<void> {
@@ -282,4 +334,160 @@ export async function getRecentVotesByBioguide(
     return b.rollnumber - a.rollnumber;
   });
   return allVotes.slice(0, limit);
+}
+
+// ─── Party-line alignment (v1 alignment score, honestly framed) ──────────
+//
+// What this computes: for each of a legislator's recent N votes, did they
+// vote with the majority of their own party? Score = % "with party."
+//
+// What it is NOT: an "alignment with public statements" score. That requires
+// a structured source of stated positions per legislator (ISideWith,
+// OnTheIssues, scraped press releases + fact-checks, etc.) which we have
+// not wired yet. The party-line consistency proxy is a real accountability
+// signal — sustained breaks from one's party are notable — but it is not
+// the original "what they said vs what they voted" thesis. UI labels this
+// explicitly as a proxy with a note about the eventual full version.
+//
+// Method:
+//   1. Group every cast on a rollcall by party (D / R / I) and count
+//      Yea vs Nay. Party position = the side with >50% of votes cast.
+//      Equal split or non-binary outcomes flagged "Split."
+//   2. For each of the legislator's recent votes:
+//      - Look up the position for THEIR party.
+//      - Compare to how they cast. Yea-on-Yea or Nay-on-Nay = with party.
+//      - Skip Present / Not Voting / Other casts AND Split party
+//        positions (no party stance to align to).
+//   3. Aggregate: with / against / total considered.
+
+export type AlignmentVoteEntry = {
+  congress: number;
+  chamber: "Senate" | "House";
+  rollnumber: number;
+  date: string;
+  cast: CastCode;
+  partyPosition: PartyPosition;
+  alignment: "with" | "against" | "skipped";
+};
+
+export type PartyAlignment = {
+  bioguide: string;
+  party: "D" | "R" | "I";
+  method: "party-line-consistency-proxy";
+  votesConsidered: number;
+  withParty: number;
+  againstParty: number;
+  percentage: number; // 0..100, rounded
+  perVote: AlignmentVoteEntry[];
+};
+
+async function getPartyMajoritiesForRollcall(
+  chamber: "S" | "H",
+  congress: number,
+  rollnumber: number
+): Promise<{ D: PartyPosition; R: PartyPosition; I: PartyPosition }> {
+  const memoKey = `${cacheKey(chamber, congress)}:${rollnumber}`;
+  const cached = partyMajoritiesCache.get(memoKey);
+  if (cached) return cached;
+
+  const partyMap = await loadPartiesForCongress(chamber, congress);
+  const byIcpsr = votesByIcpsrCache.get(cacheKey(chamber, congress));
+  if (!byIcpsr) {
+    const empty = { D: "Split" as const, R: "Split" as const, I: "Split" as const };
+    partyMajoritiesCache.set(memoKey, empty);
+    return empty;
+  }
+
+  const yea: Record<"D" | "R" | "I", number> = { D: 0, R: 0, I: 0 };
+  const nay: Record<"D" | "R" | "I", number> = { D: 0, R: 0, I: 0 };
+
+  for (const [icpsr, casts] of byIcpsr) {
+    const party = partyMap.get(icpsr);
+    if (!party) continue;
+    const cast = casts.find((c) => Number(c.rollnumber) === rollnumber);
+    if (!cast) continue;
+    const decoded = decodeCast(cast.cast_code);
+    if (decoded === "Yea") yea[party] += 1;
+    else if (decoded === "Nay") nay[party] += 1;
+  }
+
+  const positionFor = (p: "D" | "R" | "I"): PartyPosition => {
+    if (yea[p] === 0 && nay[p] === 0) return "Split";
+    if (yea[p] > nay[p]) return "Yea";
+    if (nay[p] > yea[p]) return "Nay";
+    return "Split";
+  };
+
+  const out = {
+    D: positionFor("D"),
+    R: positionFor("R"),
+    I: positionFor("I"),
+  };
+  partyMajoritiesCache.set(memoKey, out);
+  return out;
+}
+
+export async function getPartyAlignmentByBioguide(opts: {
+  bioguide: string;
+  party: "D" | "R" | "I";
+  chamber: "Senate" | "House";
+  limit?: number;
+}): Promise<PartyAlignment> {
+  const { bioguide, party, chamber } = opts;
+  const limit = opts.limit ?? 25; // wider window than display count to get a
+  // stable percentage; UI shows summary not the full list
+
+  const votes = await getRecentVotesByBioguide(bioguide, {
+    chamber,
+    limit,
+  });
+
+  const ch: "S" | "H" = chamber === "Senate" ? "S" : "H";
+  const perVote: AlignmentVoteEntry[] = [];
+  let withParty = 0;
+  let againstParty = 0;
+
+  for (const v of votes) {
+    const positions = await getPartyMajoritiesForRollcall(
+      ch,
+      v.congress,
+      v.rollnumber
+    );
+    const pos = positions[party];
+    const cast = v.cast;
+    let alignment: "with" | "against" | "skipped" = "skipped";
+    if (pos !== "Split" && (cast === "Yea" || cast === "Nay")) {
+      if (cast === pos) {
+        alignment = "with";
+        withParty += 1;
+      } else {
+        alignment = "against";
+        againstParty += 1;
+      }
+    }
+    perVote.push({
+      congress: v.congress,
+      chamber: v.chamber,
+      rollnumber: v.rollnumber,
+      date: v.date,
+      cast: v.cast,
+      partyPosition: pos,
+      alignment,
+    });
+  }
+
+  const considered = withParty + againstParty;
+  const percentage =
+    considered > 0 ? Math.round((withParty / considered) * 100) : 0;
+
+  return {
+    bioguide,
+    party,
+    method: "party-line-consistency-proxy",
+    votesConsidered: considered,
+    withParty,
+    againstParty,
+    percentage,
+    perVote,
+  };
 }

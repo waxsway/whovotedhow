@@ -11,6 +11,16 @@ import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
 
+type AlignmentResult = {
+  bioguide: string;
+  party: "D" | "R" | "I";
+  method: string;
+  votesConsidered: number;
+  withParty: number;
+  againstParty: number;
+  percentage: number;
+};
+
 // Tracks whether the viewport is narrow (mobile/portrait phone). When true,
 // the side panel renders as a bottom sheet across the full screen width
 // rather than a fixed 420px right column. The breakpoint is 768px (md in
@@ -257,6 +267,178 @@ function VotesList({
   );
 }
 
+function AlignmentBadge({ leg }: { leg: Legislator }) {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; result: AlignmentResult }
+    | { status: "error"; message: string }
+  >({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (leg.party === "Other") {
+      setState({ status: "error", message: "No party affiliation on file." });
+      return;
+    }
+    setState({ status: "loading" });
+    (async () => {
+      try {
+        const url = `/api/alignment/${leg.bioguide}?chamber=${encodeURIComponent(leg.chamber)}&party=${encodeURIComponent(leg.party)}`;
+        const res = await fetch(url);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({ status: "error", message: body?.error || "Request failed" });
+          return;
+        }
+        setState({ status: "ready", result: body as AlignmentResult });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setState({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leg.bioguide, leg.chamber, leg.party]);
+
+  if (leg.party === "Other") return null;
+  const partyName =
+    leg.party === "D"
+      ? "Democratic"
+      : leg.party === "R"
+        ? "Republican"
+        : "Independent";
+
+  const partyColor = PARTY_COLORS[leg.party];
+
+  if (state.status === "loading") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Computing party-line consistency…
+      </div>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Could not compute alignment: {state.message}
+      </div>
+    );
+  }
+  const { percentage, withParty, againstParty, votesConsidered } = state.result;
+  if (votesConsidered === 0) {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Not enough recent votes to compute party-line consistency.
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        padding: "10px 12px",
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <span
+          style={{ fontSize: 13, fontWeight: 700, color: "rgba(244,244,245,0.92)" }}
+        >
+          Party-line consistency
+        </span>
+        <span
+          style={{
+            fontSize: 24,
+            fontWeight: 900,
+            color: partyColor,
+            letterSpacing: -0.5,
+          }}
+        >
+          {percentage}%
+        </span>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          height: 4,
+          marginTop: 8,
+          borderRadius: 3,
+          overflow: "hidden",
+          background: "rgba(255,255,255,0.06)",
+        }}
+      >
+        <div
+          style={{
+            flexBasis: `${percentage}%`,
+            background: partyColor,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          fontSize: 11,
+          color: "rgba(244,244,245,0.55)",
+          marginTop: 8,
+          lineHeight: 1.5,
+        }}
+      >
+        Voted with the {partyName} majority on {withParty} of {votesConsidered}{" "}
+        recent roll calls (against on {againstParty}).
+      </div>
+      <div
+        style={{
+          fontSize: 10,
+          color: "rgba(244,244,245,0.35)",
+          marginTop: 6,
+          lineHeight: 1.5,
+        }}
+      >
+        v1 proxy. Real &quot;statements vs. votes&quot; alignment requires a
+        structured public-statement source we have not wired yet; we&apos;ll
+        replace this with the full version when it&apos;s available.
+      </div>
+    </div>
+  );
+}
+
 function DonorPanel({ leg }: { leg: Legislator }) {
   const [state, setState] = useState<
     | { status: "loading" }
@@ -442,8 +624,7 @@ function LegislatorRow({
               gap: 12,
             }}
           >
-            <span>Alignment score: coming soon</span>
-            <span>Votes + donors: expand below</span>
+            <span>Expand for votes, donors, alignment</span>
           </div>
         </div>
         <div
@@ -476,6 +657,20 @@ function LegislatorRow({
                 letterSpacing: 0.6,
                 color: "rgba(244,244,245,0.4)",
                 padding: "10px 0 6px",
+              }}
+            >
+              Alignment (v1 proxy)
+            </div>
+            <AlignmentBadge leg={leg} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
               }}
             >
               Recent roll-call votes
