@@ -47,6 +47,17 @@ type StatementAlignmentIssue = {
   aligned: boolean | null;
 };
 
+type ConstituentAlignmentResult = {
+  bioguide: string;
+  stateCode: string;
+  pvi: { code: string; pvi: number; label: string } | null;
+  legislatorParty: "D" | "R" | "I";
+  stateLean: "D" | "R" | "EVEN";
+  partyLineConsistency: number;
+  constituentAlignment: number | null;
+  rationale: string;
+};
+
 type StatementAlignmentResult =
   | { available: false; reason: string }
   | {
@@ -302,6 +313,240 @@ function VotesList({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ConstituentAlignmentBadge({ leg }: { leg: Legislator }) {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; result: ConstituentAlignmentResult }
+    | { status: "error"; message: string }
+  >({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (leg.party === "Other") {
+      setState({ status: "error", message: "No party on file" });
+      return;
+    }
+    setState({ status: "loading" });
+    (async () => {
+      try {
+        const url = `/api/constituent-alignment/${leg.bioguide}?chamber=${encodeURIComponent(leg.chamber)}&party=${encodeURIComponent(leg.party)}&state=${encodeURIComponent(leg.state)}`;
+        const res = await fetch(url);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({ status: "error", message: body?.error || "Request failed" });
+          return;
+        }
+        setState({ status: "ready", result: body as ConstituentAlignmentResult });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setState({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leg.bioguide, leg.chamber, leg.party, leg.state]);
+
+  if (leg.party === "Other") return null;
+
+  if (state.status === "loading") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Computing constituent-vote alignment…
+      </div>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Could not compute constituent alignment: {state.message}
+      </div>
+    );
+  }
+
+  const { pvi, stateLean, constituentAlignment, rationale, partyLineConsistency } =
+    state.result;
+
+  if (!pvi) {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        {rationale}
+      </div>
+    );
+  }
+
+  // Color the PVI label by direction
+  const pviColor =
+    pvi.pvi > 0
+      ? "#3b82f6"
+      : pvi.pvi < 0
+        ? "#ef4444"
+        : "rgba(244,244,245,0.65)";
+
+  return (
+    <div
+      style={{
+        padding: "12px 12px 14px",
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "rgba(244,244,245,0.92)",
+            }}
+          >
+            Constituent-vote alignment
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "rgba(244,244,245,0.5)",
+              marginTop: 3,
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <span>State partisan lean:</span>
+            <span
+              style={{
+                fontWeight: 800,
+                color: pviColor,
+                letterSpacing: 0.5,
+                fontSize: 11,
+              }}
+            >
+              {pvi.label}
+            </span>
+            <span>(Cook PVI 2025)</span>
+          </div>
+        </div>
+        {constituentAlignment !== null ? (
+          <span
+            style={{
+              fontSize: 28,
+              fontWeight: 900,
+              color: pviColor,
+              letterSpacing: -0.5,
+            }}
+          >
+            {constituentAlignment}%
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: 11,
+              color: "rgba(244,244,245,0.5)",
+              maxWidth: 140,
+              textAlign: "right",
+            }}
+          >
+            {stateLean === "EVEN"
+              ? "Swing state — no single-number alignment"
+              : "Score unavailable"}
+          </span>
+        )}
+      </div>
+
+      {constituentAlignment !== null ? (
+        <div
+          style={{
+            display: "flex",
+            height: 4,
+            borderRadius: 3,
+            overflow: "hidden",
+            background: "rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              flexBasis: `${constituentAlignment}%`,
+              background: pviColor,
+            }}
+          />
+        </div>
+      ) : null}
+
+      <div
+        style={{
+          fontSize: 11,
+          color: "rgba(244,244,245,0.6)",
+          lineHeight: 1.55,
+        }}
+      >
+        {rationale}
+        {constituentAlignment !== null ? (
+          <>
+            {" "}Party-line consistency for context: {partyLineConsistency}%.
+          </>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          fontSize: 10,
+          color: "rgba(244,244,245,0.35)",
+          lineHeight: 1.5,
+        }}
+      >
+        Cook PVI measures how much a state voted more Democratic or Republican
+        than the national average across the last two presidential cycles.
+        Constituent-vote alignment combines that with recent roll-call voting:
+        for a senator whose party matches their state&apos;s lean, voting with
+        their party = voting with the state; for a senator whose party
+        opposes the state&apos;s lean, voting with their party = voting
+        against the state&apos;s lean (and the score inverts accordingly).
+      </div>
     </div>
   );
 }
@@ -1093,6 +1338,20 @@ function LegislatorRow({
               Statement-vote alignment
             </div>
             <AlignmentBadge leg={leg} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
+              }}
+            >
+              Constituent-vote alignment
+            </div>
+            <ConstituentAlignmentBadge leg={leg} />
           </div>
           <div>
             <div
