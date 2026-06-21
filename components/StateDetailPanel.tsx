@@ -21,6 +21,7 @@ import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 import StockTradesSection from "@/components/StockTradesSection";
 import CommitteesSection from "@/components/CommitteesSection";
 import BillsSection from "@/components/BillsSection";
+import GovernorSection from "@/components/GovernorSection";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
 import VoterInfoSection from "@/components/VoterInfoSection";
@@ -1680,6 +1681,21 @@ export default function StateDetailPanel({
           gap: 18,
         }}
       >
+        <section>
+          <h3
+            style={{
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              color: "rgba(244,244,245,0.45)",
+              margin: "0 0 10px",
+            }}
+          >
+            Governor
+          </h3>
+          <GovernorSection stateCode={state.code} />
+        </section>
+
         {senators.length > 0 && (
           <section>
             <h3
