@@ -21,6 +21,43 @@ type AlignmentResult = {
   percentage: number;
 };
 
+type StatementAlignmentIssue = {
+  issueId: string;
+  issueTitle: string;
+  stance: {
+    direction: "favors" | "opposes";
+    statement: string;
+    source: string;
+    sourceLabel: string;
+  };
+  matchingVotes: Array<{
+    congress: number;
+    rollnumber: number;
+    date: string;
+    voteDesc: string;
+    billNumber: string | null;
+    cast: string;
+    consistent: boolean;
+  }>;
+  consistentCount: number;
+  inconsistentCount: number;
+  consideredCount: number;
+  aligned: boolean | null;
+};
+
+type StatementAlignmentResult =
+  | { available: false; reason: string }
+  | {
+      available: true;
+      bioguide: string;
+      method: "statement-vs-vote";
+      perIssue: StatementAlignmentIssue[];
+      issuesAligned: number;
+      issuesInconsistent: number;
+      issuesUnscored: number;
+      overallPercentage: number | null;
+    };
+
 // Tracks whether the viewport is narrow (mobile/portrait phone). When true,
 // the side panel renders as a bottom sheet across the full screen width
 // rather than a fixed 420px right column. The breakpoint is 768px (md in
@@ -267,101 +304,21 @@ function VotesList({
   );
 }
 
-function AlignmentBadge({ leg }: { leg: Legislator }) {
-  const [state, setState] = useState<
-    | { status: "loading" }
-    | { status: "ready"; result: AlignmentResult }
-    | { status: "error"; message: string }
-  >({ status: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-    if (leg.party === "Other") {
-      setState({ status: "error", message: "No party affiliation on file." });
-      return;
-    }
-    setState({ status: "loading" });
-    (async () => {
-      try {
-        const url = `/api/alignment/${leg.bioguide}?chamber=${encodeURIComponent(leg.chamber)}&party=${encodeURIComponent(leg.party)}`;
-        const res = await fetch(url);
-        const body = await res.json();
-        if (cancelled) return;
-        if (!res.ok) {
-          setState({ status: "error", message: body?.error || "Request failed" });
-          return;
-        }
-        setState({ status: "ready", result: body as AlignmentResult });
-      } catch (err) {
-        if (cancelled) return;
-        const msg = err instanceof Error ? err.message : String(err);
-        setState({ status: "error", message: msg });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [leg.bioguide, leg.chamber, leg.party]);
-
-  if (leg.party === "Other") return null;
+function PartyLineProxyBadge({
+  leg,
+  result,
+}: {
+  leg: Legislator;
+  result: AlignmentResult;
+}) {
   const partyName =
     leg.party === "D"
       ? "Democratic"
       : leg.party === "R"
         ? "Republican"
         : "Independent";
-
   const partyColor = PARTY_COLORS[leg.party];
-
-  if (state.status === "loading") {
-    return (
-      <div
-        style={{
-          fontSize: 12,
-          color: "rgba(244,244,245,0.45)",
-          padding: "8px 12px",
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.05)",
-          borderRadius: 8,
-        }}
-      >
-        Computing party-line consistency…
-      </div>
-    );
-  }
-  if (state.status === "error") {
-    return (
-      <div
-        style={{
-          fontSize: 12,
-          color: "rgba(244,244,245,0.45)",
-          padding: "8px 12px",
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.05)",
-          borderRadius: 8,
-        }}
-      >
-        Could not compute alignment: {state.message}
-      </div>
-    );
-  }
-  const { percentage, withParty, againstParty, votesConsidered } = state.result;
-  if (votesConsidered === 0) {
-    return (
-      <div
-        style={{
-          fontSize: 12,
-          color: "rgba(244,244,245,0.45)",
-          padding: "8px 12px",
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.05)",
-          borderRadius: 8,
-        }}
-      >
-        Not enough recent votes to compute party-line consistency.
-      </div>
-    );
-  }
+  const { percentage, withParty, againstParty, votesConsidered } = result;
   return (
     <div
       style={{
@@ -426,17 +383,409 @@ function AlignmentBadge({ leg }: { leg: Legislator }) {
       <div
         style={{
           fontSize: 10,
-          color: "rgba(244,244,245,0.35)",
+          color: "rgba(244,244,245,0.4)",
           marginTop: 6,
           lineHeight: 1.5,
         }}
       >
-        v1 proxy. Real &quot;statements vs. votes&quot; alignment requires a
-        structured public-statement source we have not wired yet; we&apos;ll
-        replace this with the full version when it&apos;s available.
+        Fallback: party-line consistency proxy. Real statement-vs-vote
+        alignment for {leg.fullName} requires a sourced public statement on
+        a tracked issue — we&apos;ll add it as we curate stances.
       </div>
     </div>
   );
+}
+
+function StatementAlignmentReport({
+  leg,
+  result,
+}: {
+  leg: Legislator;
+  result: Extract<StatementAlignmentResult, { available: true }>;
+}) {
+  const { overallPercentage, perIssue, issuesAligned, issuesInconsistent } =
+    result;
+  const partyColor = PARTY_COLORS[leg.party];
+  return (
+    <div
+      style={{
+        padding: "12px 12px 14px",
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "rgba(244,244,245,0.92)",
+            }}
+          >
+            Statement-vote alignment
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "rgba(244,244,245,0.5)",
+              marginTop: 3,
+            }}
+          >
+            {issuesAligned} aligned · {issuesInconsistent} inconsistent
+          </div>
+        </div>
+        {overallPercentage !== null ? (
+          <span
+            style={{
+              fontSize: 28,
+              fontWeight: 900,
+              color: partyColor,
+              letterSpacing: -0.5,
+            }}
+          >
+            {overallPercentage}%
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: 11,
+              color: "rgba(244,244,245,0.5)",
+              maxWidth: 140,
+              textAlign: "right",
+            }}
+          >
+            No matching votes yet on the tracked issues.
+          </span>
+        )}
+      </div>
+
+      {overallPercentage !== null ? (
+        <div
+          style={{
+            display: "flex",
+            height: 4,
+            borderRadius: 3,
+            overflow: "hidden",
+            background: "rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              flexBasis: `${overallPercentage}%`,
+              background: partyColor,
+            }}
+          />
+        </div>
+      ) : null}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {perIssue.map((issue) => {
+          const aligned = issue.aligned;
+          const dotColor =
+            aligned === null
+              ? "#71717a"
+              : aligned
+                ? "#22c55e"
+                : "#ef4444";
+          const label =
+            aligned === null
+              ? "No matching votes yet"
+              : aligned
+                ? "Voting record aligns with stated position"
+                : "Voting record contradicts stated position";
+          return (
+            <div
+              key={issue.issueId}
+              style={{
+                padding: "9px 10px",
+                background: "rgba(255,255,255,0.025)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 8,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 999,
+                    background: dotColor,
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: "rgba(244,244,245,0.9)",
+                  }}
+                >
+                  {issue.issueTitle}
+                </span>
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: 10,
+                    color: "rgba(244,244,245,0.5)",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                    fontWeight: 700,
+                  }}
+                >
+                  {issue.stance.direction === "favors" ? "Favors" : "Opposes"}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: "rgba(244,244,245,0.75)",
+                  lineHeight: 1.5,
+                  fontStyle: "italic",
+                }}
+              >
+                &ldquo;{issue.stance.statement}&rdquo;
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  fontSize: 10.5,
+                  color: "rgba(244,244,245,0.55)",
+                  flexWrap: "wrap",
+                }}
+              >
+                <a
+                  href={issue.stance.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: "rgba(196,181,253,0.85)",
+                    textDecoration: "underline",
+                  }}
+                >
+                  source: {issue.stance.sourceLabel}
+                </a>
+                <span>·</span>
+                <span>{label}</span>
+                {issue.consideredCount > 0 ? (
+                  <>
+                    <span>·</span>
+                    <span>
+                      {issue.consistentCount}/{issue.consideredCount} consistent
+                      votes
+                    </span>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          fontSize: 10,
+          color: "rgba(244,244,245,0.4)",
+          lineHeight: 1.5,
+        }}
+      >
+        Stances are sourced to specific public statements (linked above).
+        Voting record matched via roll-call descriptions from Voteview. An
+        issue is &ldquo;aligned&rdquo; when at least half the matching votes
+        moved in the direction the legislator publicly claimed.
+      </div>
+    </div>
+  );
+}
+
+function AlignmentBadge({ leg }: { leg: Legislator }) {
+  // Two-stage fetch: try statement-vs-vote first; if no curated stances
+  // are on file for this legislator, fall back to the party-line proxy.
+  const [statement, setStatement] = useState<
+    | { status: "loading" }
+    | { status: "ready"; result: StatementAlignmentResult }
+    | { status: "error"; message: string }
+  >({ status: "loading" });
+  const [proxy, setProxy] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "ready"; result: AlignmentResult }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (leg.party === "Other") {
+      setStatement({ status: "error", message: "No party affiliation on file." });
+      return;
+    }
+    setStatement({ status: "loading" });
+    (async () => {
+      try {
+        const url = `/api/statement-alignment/${leg.bioguide}?chamber=${encodeURIComponent(leg.chamber)}`;
+        const res = await fetch(url);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setStatement({
+            status: "error",
+            message: body?.error || "Request failed",
+          });
+          return;
+        }
+        setStatement({ status: "ready", result: body as StatementAlignmentResult });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setStatement({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leg.bioguide, leg.chamber, leg.party]);
+
+  // When statement alignment is unavailable, fetch party-line proxy.
+  useEffect(() => {
+    if (statement.status !== "ready") return;
+    if (statement.result.available) return;
+    if (leg.party === "Other") return;
+    if (proxy.status !== "idle") return;
+    let cancelled = false;
+    setProxy({ status: "loading" });
+    (async () => {
+      try {
+        const url = `/api/alignment/${leg.bioguide}?chamber=${encodeURIComponent(leg.chamber)}&party=${encodeURIComponent(leg.party)}`;
+        const res = await fetch(url);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setProxy({ status: "error", message: body?.error || "Request failed" });
+          return;
+        }
+        setProxy({ status: "ready", result: body as AlignmentResult });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setProxy({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statement, leg.bioguide, leg.chamber, leg.party]);
+
+  if (leg.party === "Other") return null;
+
+  if (statement.status === "loading") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Checking statement-vote alignment…
+      </div>
+    );
+  }
+  if (statement.status === "error") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Could not compute alignment: {statement.message}
+      </div>
+    );
+  }
+
+  if (statement.result.available) {
+    return <StatementAlignmentReport leg={leg} result={statement.result} />;
+  }
+
+  // No curated stances yet — fall back to party-line proxy.
+  if (proxy.status === "loading" || proxy.status === "idle") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Loading fallback (party-line consistency)…
+      </div>
+    );
+  }
+  if (proxy.status === "error") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Could not compute alignment: {proxy.message}
+      </div>
+    );
+  }
+  if (proxy.result.votesConsidered === 0) {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "8px 12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderRadius: 8,
+        }}
+      >
+        Not enough recent votes to compute alignment yet.
+      </div>
+    );
+  }
+  return <PartyLineProxyBadge leg={leg} result={proxy.result} />;
 }
 
 function DonorPanel({ leg }: { leg: Legislator }) {
@@ -659,7 +1008,7 @@ function LegislatorRow({
                 padding: "10px 0 6px",
               }}
             >
-              Alignment (v1 proxy)
+              Statement-vote alignment
             </div>
             <AlignmentBadge leg={leg} />
           </div>
