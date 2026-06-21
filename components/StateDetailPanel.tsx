@@ -19,6 +19,7 @@ import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
 import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 import StockTradesSection from "@/components/StockTradesSection";
+import CandidatesSection from "@/components/CandidatesSection";
 
 type AlignmentResult = {
   bioguide: string;
@@ -1709,6 +1710,21 @@ export default function StateDetailPanel({
             No current legislators on file for this state.
           </div>
         )}
+
+        <section>
+          <h3
+            style={{
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              color: "rgba(244,244,245,0.45)",
+              margin: "0 0 10px",
+            }}
+          >
+            Running for office
+          </h3>
+          <CandidatesSection stateCode={state.code} />
+        </section>
       </div>
 
       <footer
