@@ -10,6 +10,7 @@ import { stateByCode } from "@/lib/data/states";
 import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
+import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 
 type AlignmentResult = {
   bioguide: string;
@@ -1380,6 +1381,20 @@ function LegislatorRow({
               Top donors (FEC public record)
             </div>
             <DonorPanel leg={leg} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 10.5,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                color: "rgba(244,244,245,0.4)",
+                padding: "0 0 6px",
+              }}
+            >
+              Outside spending (Super PACs)
+            </div>
+            <OutsideSpendingSection leg={leg} />
           </div>
         </div>
       ) : null}

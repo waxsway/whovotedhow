@@ -69,6 +69,183 @@ export type Donor = {
   count: number;
 };
 
+// ── Outside spending (Super PAC independent expenditures) ─────────────────
+//
+// Direct campaign contributions ("the donor bubble chart" above) are only
+// half the campaign-finance picture — and increasingly the smaller half.
+// Super PACs spend money INDEPENDENTLY on ads supporting or opposing
+// candidates. That money never touches the candidate's own committee, so
+// Schedule A queries miss it entirely. Schedule E (independent
+// expenditures) is where it lives.
+//
+// Why this matters in practice: AIPAC's affiliated United Democracy Project
+// spent $40M+ in 2024 backing pro-Israel Senate candidates. None of that
+// shows up in the candidate's individual-contribution chart. It DOES show
+// up in Schedule E filings against that candidate's FEC ID.
+//
+// We use the by_candidate aggregation endpoint, which pre-groups Schedule E
+// rows by (committee_id, support_oppose_indicator) per candidate — exactly
+// the shape we want to display.
+
+export type OutsideSpendingEntry = {
+  committeeId: string;
+  committeeName: string;
+  total: number;
+  count: number;
+  // "S" = supporting the candidate, "O" = opposing the candidate
+  supportOppose: "S" | "O";
+};
+
+export type OutsideSpendingSummary = {
+  bioguide: string;
+  fecCandidateId: string | null;
+  cycle: number;
+  source: "FEC";
+  // Top N spenders supporting the candidate, sorted by total desc.
+  topSupport: OutsideSpendingEntry[];
+  // Top N spenders opposing the candidate, sorted by total desc.
+  topOppose: OutsideSpendingEntry[];
+  // Grand totals across ALL filings (not just top N), so the UI can
+  // surface "$45.2M total support / $1.3M total oppose" honestly.
+  totalSupport: number;
+  totalOppose: number;
+  // How many distinct committees showed up in each bucket.
+  supportCommitteeCount: number;
+  opposeCommitteeCount: number;
+  generatedAt: string;
+};
+
+type FecScheduleEByCandidateRow = {
+  candidate_id?: string;
+  candidate_name?: string;
+  committee_id?: string;
+  committee_name?: string;
+  count?: number;
+  cycle?: number;
+  support_oppose_indicator?: "S" | "O";
+  total?: number;
+};
+
+type FecScheduleEByCandidateResponse = {
+  results?: FecScheduleEByCandidateRow[];
+  pagination?: {
+    pages?: number;
+    page?: number;
+  };
+};
+
+const TOP_N_OUTSIDE_SPENDERS = 10;
+
+export async function getOutsideSpendingByCandidate(opts: {
+  bioguide: string;
+  fecIds: string[];
+  cycle: number;
+}): Promise<OutsideSpendingSummary> {
+  const { bioguide, fecIds, cycle } = opts;
+  const empty = (
+    candidateId: string | null
+  ): OutsideSpendingSummary => ({
+    bioguide,
+    fecCandidateId: candidateId,
+    cycle,
+    source: "FEC",
+    topSupport: [],
+    topOppose: [],
+    totalSupport: 0,
+    totalOppose: 0,
+    supportCommitteeCount: 0,
+    opposeCommitteeCount: 0,
+    generatedAt: new Date().toISOString(),
+  });
+
+  // Try each FEC ID in order (the legislator's most-recent-chamber id
+  // already sorted to index 0). Schedule E is keyed on candidate_id, so
+  // a candidate's House campaign IDs and Senate campaign IDs are tracked
+  // separately. We use the first that returns ANY outside spending data.
+  for (const candidateId of fecIds) {
+    let allRows: FecScheduleEByCandidateRow[] = [];
+    let page = 1;
+    const maxPages = 5; // Caps at 500 results — plenty for any one candidate
+
+    while (page <= maxPages) {
+      let data: FecScheduleEByCandidateResponse;
+      try {
+        data = await fecFetch<FecScheduleEByCandidateResponse>(
+          "/schedules/schedule_e/by_candidate/",
+          {
+            candidate_id: candidateId,
+            cycle,
+            per_page: 100,
+            page,
+          }
+        );
+      } catch (err) {
+        console.error(
+          "[outside-spending] by_candidate fetch failed",
+          candidateId,
+          err
+        );
+        break;
+      }
+      const rows = data.results ?? [];
+      allRows = allRows.concat(rows);
+      const totalPages = data.pagination?.pages ?? 1;
+      if (page >= totalPages || rows.length === 0) break;
+      page += 1;
+    }
+
+    if (allRows.length === 0) continue;
+
+    let totalSupport = 0;
+    let totalOppose = 0;
+    const support: OutsideSpendingEntry[] = [];
+    const oppose: OutsideSpendingEntry[] = [];
+
+    for (const row of allRows) {
+      const committeeId = (row.committee_id || "").trim();
+      const committeeName = (row.committee_name || "").trim();
+      if (!committeeId || !committeeName) continue;
+      const total = Number(row.total ?? 0);
+      const count = Number(row.count ?? 0);
+      const so = row.support_oppose_indicator;
+      if (so !== "S" && so !== "O") continue;
+      const entry: OutsideSpendingEntry = {
+        committeeId,
+        committeeName,
+        total: Math.round(total * 100) / 100,
+        count,
+        supportOppose: so,
+      };
+      if (so === "S") {
+        totalSupport += total;
+        support.push(entry);
+      } else {
+        totalOppose += total;
+        oppose.push(entry);
+      }
+    }
+
+    support.sort((a, b) => b.total - a.total);
+    oppose.sort((a, b) => b.total - a.total);
+
+    return {
+      bioguide,
+      fecCandidateId: candidateId,
+      cycle,
+      source: "FEC",
+      topSupport: support.slice(0, TOP_N_OUTSIDE_SPENDERS),
+      topOppose: oppose.slice(0, TOP_N_OUTSIDE_SPENDERS),
+      totalSupport: Math.round(totalSupport * 100) / 100,
+      totalOppose: Math.round(totalOppose * 100) / 100,
+      supportCommitteeCount: support.length,
+      opposeCommitteeCount: oppose.length,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  return empty(fecIds[0] ?? null);
+}
+
 export type DonorReport = {
   bioguide: string;
   fecCandidateId: string | null;
