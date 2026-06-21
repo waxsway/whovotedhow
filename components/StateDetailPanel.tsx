@@ -21,6 +21,7 @@ import OutsideSpendingSection from "@/components/OutsideSpendingSection";
 import StockTradesSection from "@/components/StockTradesSection";
 import CandidatesSection from "@/components/CandidatesSection";
 import JudgesSection from "@/components/JudgesSection";
+import VoterInfoSection from "@/components/VoterInfoSection";
 
 type AlignmentResult = {
   bioguide: string;
@@ -1740,6 +1741,21 @@ export default function StateDetailPanel({
             Federal judges
           </h3>
           <JudgesSection stateCode={state.code} />
+        </section>
+
+        <section>
+          <h3
+            style={{
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              color: "rgba(244,244,245,0.45)",
+              margin: "0 0 10px",
+            }}
+          >
+            Vote
+          </h3>
+          <VoterInfoSection stateCode={state.code} />
         </section>
       </div>
 
