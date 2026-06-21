@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PARTY_COLORS,
   type Legislator,
   type Party,
 } from "@/lib/data/legislators";
 import { stateByCode } from "@/lib/data/states";
+import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 
 function partyLabel(p: Party): string {
   switch (p) {
@@ -21,9 +22,16 @@ function partyLabel(p: Party): string {
   }
 }
 
+const CAST_COLORS: Record<CastCode, string> = {
+  Yea: "#22c55e",
+  Nay: "#ef4444",
+  Present: "#eab308",
+  "Not Voting": "#71717a",
+  Other: "#71717a",
+};
+
 function PortraitImage({ url, alt }: { url: string; alt: string }) {
   const [failed, setFailed] = useState(false);
-
   if (failed) {
     return (
       <div
@@ -46,10 +54,6 @@ function PortraitImage({ url, alt }: { url: string; alt: string }) {
       </div>
     );
   }
-
-  // Direct <img> instead of next/image to avoid hostname allow-list pain
-  // during early dev — we'll switch to next/image with a remotePatterns
-  // config entry for theunitedstates.io once we add it to next.config.ts.
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -70,91 +74,328 @@ function PortraitImage({ url, alt }: { url: string; alt: string }) {
   );
 }
 
+function formatDate(iso: string): string {
+  // Voteview gives ISO YYYY-MM-DD. Render as "Mar 14, 2025" for readability.
+  if (!iso || iso.length < 10) return iso;
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function VotesList({
+  bioguide,
+  chamber,
+}: {
+  bioguide: string;
+  chamber: "Senate" | "House";
+}) {
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "ready"; votes: LegislatorVote[] }
+    | { status: "error"; message: string }
+  >({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (chamber === "House") {
+      // We haven't ingested the H-chamber Voteview files yet — show a
+      // clean placeholder rather than fire a request that returns empty.
+      setState({ status: "ready", votes: [] });
+      return;
+    }
+    setState({ status: "loading" });
+    (async () => {
+      try {
+        const res = await fetch(`/api/votes/${bioguide}`);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({ status: "error", message: body?.error || "Request failed" });
+          return;
+        }
+        setState({
+          status: "ready",
+          votes: Array.isArray(body?.votes) ? body.votes : [],
+        });
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setState({ status: "error", message: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bioguide, chamber]);
+
+  if (chamber === "House") {
+    return (
+      <div
+        style={{
+          padding: "10px 12px",
+          borderRadius: 8,
+          background: "rgba(255,255,255,0.02)",
+          border: "1px dashed rgba(255,255,255,0.08)",
+          fontSize: 12,
+          color: "rgba(244,244,245,0.55)",
+          lineHeight: 1.55,
+        }}
+      >
+        House voting records coming next. Senate records are live.
+      </div>
+    );
+  }
+
+  if (state.status === "loading") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "6px 2px",
+        }}
+      >
+        Loading recent votes…
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "#fca5a5",
+          padding: "6px 2px",
+        }}
+      >
+        Could not load votes: {state.message}
+      </div>
+    );
+  }
+
+  if (state.votes.length === 0) {
+    return (
+      <div
+        style={{
+          fontSize: 12,
+          color: "rgba(244,244,245,0.45)",
+          padding: "6px 2px",
+        }}
+      >
+        No recent votes on file. May be a newly seated member or a vote-data gap.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {state.votes.map((v) => (
+        <div
+          key={`${v.congress}-${v.chamber}-${v.rollnumber}`}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            gap: 10,
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9.5,
+              fontWeight: 800,
+              letterSpacing: 0.5,
+              padding: "3px 6px",
+              borderRadius: 5,
+              background: `${CAST_COLORS[v.cast]}1f`,
+              color: CAST_COLORS[v.cast],
+              flexShrink: 0,
+              textTransform: "uppercase",
+              minWidth: 38,
+              textAlign: "center",
+              marginTop: 1,
+            }}
+          >
+            {v.cast === "Not Voting" ? "NV" : v.cast.slice(0, 3)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 13,
+                color: "rgba(244,244,245,0.92)",
+                lineHeight: 1.45,
+                marginBottom: 4,
+              }}
+            >
+              {v.voteDesc || v.voteQuestion}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                fontSize: 10.5,
+                color: "rgba(244,244,245,0.5)",
+                flexWrap: "wrap",
+              }}
+            >
+              <span>{formatDate(v.date)}</span>
+              {v.billNumber ? (
+                <span style={{ fontFamily: "monospace" }}>{v.billNumber}</span>
+              ) : null}
+              <span>
+                Result: {v.voteResult || "—"} ({v.yeaCount}-{v.nayCount})
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LegislatorRow({ leg }: { leg: Legislator }) {
   const color = PARTY_COLORS[leg.party];
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div
       style={{
-        display: "flex",
-        gap: 12,
-        padding: "10px 12px",
         borderRadius: 10,
         background: "rgba(255,255,255,0.02)",
         border: "1px solid rgba(255,255,255,0.06)",
-        alignItems: "center",
+        overflow: "hidden",
       }}
     >
-      <PortraitImage url={leg.portraitUrl} alt={leg.fullName} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 4,
-          }}
-        >
-          <span
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        style={{
+          appearance: "none",
+          width: "100%",
+          background: "transparent",
+          border: "none",
+          color: "inherit",
+          cursor: "pointer",
+          textAlign: "left",
+          padding: "10px 12px",
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <PortraitImage url={leg.portraitUrl} alt={leg.fullName} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
             style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#f4f4f5",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {leg.fullName}
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            alignItems: "center",
-            fontSize: 11,
-            color: "rgba(244,244,245,0.55)",
-            flexWrap: "wrap",
-          }}
-        >
-          <span
-            style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 4,
-              padding: "2px 7px",
-              borderRadius: 999,
-              background: `${color}1f`,
-              color,
-              fontWeight: 700,
-              letterSpacing: 0.3,
-              fontSize: 10,
-              textTransform: "uppercase",
+              gap: 8,
+              marginBottom: 4,
             }}
           >
-            {partyLabel(leg.party).slice(0, 3)}
-          </span>
-          <span>
-            {leg.chamber === "Senate"
-              ? `Senate · Class ${leg.senateClass ?? "?"}`
-              : leg.district !== null
-                ? `House · District ${leg.district}`
-                : "House · At-large"}
-          </span>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#f4f4f5",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {leg.fullName}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              alignItems: "center",
+              fontSize: 11,
+              color: "rgba(244,244,245,0.55)",
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "2px 7px",
+                borderRadius: 999,
+                background: `${color}1f`,
+                color,
+                fontWeight: 700,
+                letterSpacing: 0.3,
+                fontSize: 10,
+                textTransform: "uppercase",
+              }}
+            >
+              {partyLabel(leg.party).slice(0, 3)}
+            </span>
+            <span>
+              {leg.chamber === "Senate"
+                ? `Senate · Class ${leg.senateClass ?? "?"}`
+                : leg.district !== null
+                  ? `House · District ${leg.district}`
+                  : "House · At-large"}
+            </span>
+          </div>
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 11,
+              color: "rgba(244,244,245,0.4)",
+              display: "flex",
+              gap: 12,
+            }}
+          >
+            <span>Alignment score: coming soon</span>
+            <span>Donor map: coming soon</span>
+          </div>
         </div>
         <div
+          aria-hidden
           style={{
-            marginTop: 6,
-            fontSize: 11,
+            fontSize: 14,
             color: "rgba(244,244,245,0.4)",
-            display: "flex",
-            gap: 12,
+            transition: "transform 120ms ease",
+            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
           }}
         >
-          <span>Alignment score: coming soon</span>
-          <span>Donor map: coming soon</span>
+          ▾
         </div>
-      </div>
+      </button>
+      {expanded ? (
+        <div
+          style={{
+            padding: "0 12px 12px",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10.5,
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
+              color: "rgba(244,244,245,0.4)",
+              padding: "10px 0 6px",
+            }}
+          >
+            Recent roll-call votes
+          </div>
+          <VotesList bioguide={leg.bioguide} chamber={leg.chamber} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -182,7 +423,7 @@ export default function StateDetailPanel({
         top: 16,
         right: 16,
         bottom: 16,
-        width: 380,
+        width: 420,
         maxWidth: "calc(100vw - 32px)",
         background: "rgba(10,14,28,0.92)",
         backdropFilter: "blur(14px)",
@@ -339,8 +580,8 @@ export default function StateDetailPanel({
           lineHeight: 1.55,
         }}
       >
-        Roster data: github.com/unitedstates/congress-legislators · Portraits:
-        theunitedstates.io/images/congress
+        Roster: unitedstates/congress-legislators · Portraits:
+        theunitedstates.io · Votes: voteview.com
       </footer>
     </aside>
   );
