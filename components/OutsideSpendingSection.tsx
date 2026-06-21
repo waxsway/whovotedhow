@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Legislator } from "@/lib/data/legislators";
+import {
+  getLegislatorElectionCycle,
+  type Legislator,
+} from "@/lib/data/legislators";
 import type {
   OutsideSpendingSummary,
   OutsideSpendingEntry,
@@ -230,7 +233,8 @@ export default function OutsideSpendingSection({ leg }: { leg: Legislator }) {
     setState({ status: "loading" });
     (async () => {
       try {
-        const url = `/api/outside-spending/${leg.bioguide}?fec=${encodeURIComponent(leg.fecIds.join(","))}`;
+        const cycle = getLegislatorElectionCycle(leg);
+        const url = `/api/outside-spending/${leg.bioguide}?fec=${encodeURIComponent(leg.fecIds.join(","))}&cycle=${cycle}`;
         const res = await fetch(url);
         const body = await res.json();
         if (cancelled) return;

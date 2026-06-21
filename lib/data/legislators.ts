@@ -212,6 +212,31 @@ export function groupByState(legislators: Legislator[]): LegislatorsByState {
   return out;
 }
 
+// Derive the election cycle for this legislator's CURRENT term — the cycle
+// in which campaign donations were raised and outside money was spent on
+// their last race. Used by donor + outside-spending UI to default to the
+// right window rather than the calendar year.
+//
+//   - termStart is the ISO date the current term began (typically Jan of
+//     an odd year for federal seats). They were elected the year BEFORE
+//     term start.
+//   - For senators not on the ballot every cycle, this is the
+//     correct historical cycle: Ted Cruz's term started 2025-01-03, so
+//     his most recent election was 2024, and donor + IE data lives there.
+//   - For House reps (2-year terms), this equals current-cycle activity.
+export function getLegislatorElectionCycle(leg: Legislator): number {
+  if (leg.termStart) {
+    const year = parseInt(leg.termStart.slice(0, 4), 10);
+    if (Number.isFinite(year)) {
+      const electionYear = year - 1;
+      return electionYear % 2 === 0 ? electionYear : electionYear - 1;
+    }
+  }
+  // Fallback: most recent even calendar year
+  const now = new Date().getUTCFullYear();
+  return now % 2 === 0 ? now : now - 1;
+}
+
 export const PARTY_COLORS: Record<Party, string> = {
   D: "#3b82f6", // blue-500
   R: "#ef4444", // red-500

@@ -3,9 +3,15 @@
 import { useEffect, useState } from "react";
 import {
   PARTY_COLORS,
+  getLegislatorElectionCycle,
   type Legislator,
   type Party,
 } from "@/lib/data/legislators";
+import {
+  formatFinancialShort,
+  getGovernmentSalary,
+  getNetWorth,
+} from "@/lib/data/finances";
 import { stateByCode } from "@/lib/data/states";
 import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 import type { DonorReport } from "@/lib/data/donors";
@@ -1137,8 +1143,9 @@ function DonorPanel({ leg }: { leg: Legislator }) {
     (async () => {
       try {
         const fec = leg.fecIds.join(",");
+        const cycle = getLegislatorElectionCycle(leg);
         const res = await fetch(
-          `/api/donors/${leg.bioguide}?fec=${encodeURIComponent(fec)}`
+          `/api/donors/${leg.bioguide}?fec=${encodeURIComponent(fec)}&cycle=${cycle}`
         );
         const body = await res.json();
         if (cancelled) return;
@@ -1159,7 +1166,7 @@ function DonorPanel({ leg }: { leg: Legislator }) {
     return () => {
       cancelled = true;
     };
-  }, [leg.bioguide, leg.fecIds]);
+  }, [leg]);
 
   if (state.status === "loading") {
     return (
@@ -1257,6 +1264,64 @@ function LegislatorRow({
               {leg.fullName}
             </span>
           </div>
+          {(() => {
+            const salary = getGovernmentSalary(leg.bioguide);
+            const netWorth = getNetWorth(leg.bioguide);
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  fontSize: 11,
+                  color: "rgba(244,244,245,0.6)",
+                  marginBottom: 4,
+                  lineHeight: 1.4,
+                }}
+              >
+                <span>
+                  Salary:{" "}
+                  <strong
+                    style={{ color: "rgba(244,244,245,0.88)", fontWeight: 700 }}
+                  >
+                    {formatFinancialShort(salary)}
+                  </strong>
+                </span>
+                <span style={{ color: "rgba(244,244,245,0.25)" }}>·</span>
+                {netWorth ? (
+                  <span>
+                    Net worth:{" "}
+                    <strong
+                      style={{
+                        color: "rgba(244,244,245,0.88)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {formatFinancialShort(netWorth.estimate)}
+                    </strong>{" "}
+                    <a
+                      href={netWorth.source}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: "rgba(196,181,253,0.7)",
+                        textDecoration: "underline",
+                        fontSize: 10,
+                      }}
+                    >
+                      ({netWorth.sourceLabel} {netWorth.year})
+                    </a>
+                  </span>
+                ) : (
+                  <span style={{ color: "rgba(244,244,245,0.4)" }}>
+                    Net worth: not on file
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           <div
             style={{
               display: "flex",
