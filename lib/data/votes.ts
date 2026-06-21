@@ -427,6 +427,124 @@ async function getPartyMajoritiesForRollcall(
   return out;
 }
 
+// Look up a legislator's votes on the tagged-rollcall set for a specific
+// bill. Returns the substantive rollcalls (filtered by vote_question) that
+// reference the given bill, with the legislator's cast on each.
+//
+// Used by the statement-alignment engine to score against curated bills
+// rather than fuzzy keyword matching against vote_desc.
+
+import {
+  isSubstantiveVoteQuestion,
+  type TaggedRollcall,
+} from "./tagged-rollcalls";
+
+export type TaggedVoteResult = {
+  congress: number;
+  chamber: "Senate" | "House";
+  rollnumber: number;
+  date: string;
+  voteDesc: string;
+  voteQuestion: string;
+  voteResult: string;
+  billNumber: string | null;
+  yeaCount: number;
+  nayCount: number;
+  cast: CastCode;
+  // The TaggedRollcall entry this was matched against — surfaced so the UI
+  // can display "Bill: X / Issue: Y / Yea advances favors direction" etc.
+  tag: TaggedRollcall;
+};
+
+export async function getTaggedVotesForLegislator(opts: {
+  bioguide: string;
+  tags: TaggedRollcall[];
+}): Promise<TaggedVoteResult[]> {
+  const { bioguide, tags } = opts;
+  if (tags.length === 0) return [];
+
+  const bioguideToIcpsr = await loadBioguideToIcpsr();
+  const icpsr = bioguideToIcpsr.get(bioguide.trim());
+  if (!icpsr) return [];
+
+  // Group tags by (chamber, congress) so we only load each cache key once.
+  const byChamberCongress = new Map<string, TaggedRollcall[]>();
+  for (const tag of tags) {
+    const ch: "S" | "H" = tag.chamber === "Senate" ? "S" : "H";
+    const key = cacheKey(ch, tag.congress);
+    const bucket = byChamberCongress.get(key);
+    if (bucket) bucket.push(tag);
+    else byChamberCongress.set(key, [tag]);
+  }
+
+  // Load required Congresses in parallel (no-op when already cached).
+  const loads: Promise<void>[] = [];
+  for (const key of byChamberCongress.keys()) {
+    const ch = key[0] as "S" | "H";
+    const congress = Number(key.slice(1));
+    loads.push(loadCongress(ch, congress));
+  }
+  await Promise.all(loads);
+
+  const results: TaggedVoteResult[] = [];
+
+  for (const [key, tagsHere] of byChamberCongress) {
+    const ch = key[0] as "S" | "H";
+    const congress = Number(key.slice(1));
+    const rollcalls = rollcallsCache.get(key);
+    const memberVotes = votesByIcpsrCache.get(key)?.get(icpsr);
+    if (!rollcalls || !memberVotes) continue;
+
+    // Index member votes by rollnumber for O(1) lookup.
+    const memberByRoll = new Map<number, VoteRow>();
+    for (const v of memberVotes) {
+      const n = Number(v.rollnumber);
+      if (Number.isFinite(n)) memberByRoll.set(n, v);
+    }
+
+    for (const tag of tagsHere) {
+      // Find all rollcalls referencing this bill, filtered to substantive
+      // vote_questions unless the tag explicitly lists rollnumbers.
+      const matchingRollcalls: Array<{
+        rollnumber: number;
+        meta: RollcallRow;
+      }> = [];
+      for (const [rollnumber, meta] of rollcalls) {
+        if ((meta.bill_number || "").trim() !== tag.billNumber) continue;
+        if (tag.rollnumbers && tag.rollnumbers.length > 0) {
+          if (!tag.rollnumbers.includes(rollnumber)) continue;
+        } else if (!isSubstantiveVoteQuestion(meta.vote_question)) {
+          continue;
+        }
+        matchingRollcalls.push({ rollnumber, meta });
+      }
+
+      for (const { rollnumber, meta } of matchingRollcalls) {
+        const cast = memberByRoll.get(rollnumber);
+        if (!cast) continue;
+        results.push({
+          congress,
+          chamber: ch === "S" ? "Senate" : "House",
+          rollnumber,
+          date: (meta.date || "").trim(),
+          voteDesc: (meta.vote_desc || "").trim(),
+          voteQuestion: (meta.vote_question || "").trim(),
+          voteResult: (meta.vote_result || "").trim(),
+          billNumber: normalizeBillNumber(meta.bill_number),
+          yeaCount: Number(meta.yea_count) || 0,
+          nayCount: Number(meta.nay_count) || 0,
+          cast: decodeCast(cast.cast_code),
+          tag,
+        });
+      }
+    }
+  }
+
+  // Sort by date desc.
+  results.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  return results;
+}
+
 export async function getPartyAlignmentByBioguide(opts: {
   bioguide: string;
   party: "D" | "R" | "I";

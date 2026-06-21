@@ -38,6 +38,8 @@ type StatementAlignmentIssue = {
     billNumber: string | null;
     cast: string;
     consistent: boolean;
+    billDescription: string;
+    billSourceUrl: string | null;
   }>;
   consistentCount: number;
   inconsistentCount: number;
@@ -598,6 +600,82 @@ function StatementAlignmentReport({
                   </>
                 ) : null}
               </div>
+
+              {/* Per-vote citations for the bills we matched against. Each
+                  vote links to the bill on congress.gov so the reader can
+                  verify the receipt. */}
+              {issue.matchingVotes.length > 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    marginTop: 6,
+                    paddingTop: 6,
+                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  {issue.matchingVotes.map((v, i) => (
+                    <div
+                      key={`${v.congress}-${v.rollnumber}-${i}`}
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "flex-start",
+                        fontSize: 10.5,
+                        color: "rgba(244,244,245,0.65)",
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          letterSpacing: 0.4,
+                          padding: "2px 5px",
+                          borderRadius: 4,
+                          background: v.consistent
+                            ? "rgba(34,197,94,0.18)"
+                            : "rgba(239,68,68,0.18)",
+                          color: v.consistent ? "#86efac" : "#fca5a5",
+                          textTransform: "uppercase",
+                          flexShrink: 0,
+                          marginTop: 1,
+                        }}
+                      >
+                        {v.cast}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        {v.billSourceUrl ? (
+                          <a
+                            href={v.billSourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: "rgba(196,181,253,0.85)",
+                              textDecoration: "underline",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {v.billNumber}
+                          </a>
+                        ) : (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: "rgba(244,244,245,0.75)",
+                            }}
+                          >
+                            {v.billNumber}
+                          </span>
+                        )}
+                        {" — "}
+                        {v.billDescription}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           );
         })}
@@ -611,9 +689,13 @@ function StatementAlignmentReport({
         }}
       >
         Stances are sourced to specific public statements (linked above).
-        Voting record matched via roll-call descriptions from Voteview. An
-        issue is &ldquo;aligned&rdquo; when at least half the matching votes
-        moved in the direction the legislator publicly claimed.
+        Voting record matched against a hand-curated registry of substantive
+        landmark bills per issue — not fuzzy keyword scans. Each tagged
+        bill explicitly declares whether Yea or Nay advances the issue
+        position. An issue is &ldquo;aligned&rdquo; when at least half the
+        tagged votes from the legislator moved in their stated direction.
+        Bill registry is small and growing; untagged issues honestly show
+        &ldquo;no tagged votes yet.&rdquo;
       </div>
     </div>
   );
