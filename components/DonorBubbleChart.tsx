@@ -66,6 +66,57 @@ function initials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+// Fit a donor name into a bubble. Strategy:
+//  - Very small bubbles (r < 22): no label at all, would be unreadable
+//  - Small bubbles (22 <= r < 32): 2-letter initials
+//  - Medium bubbles (32 <= r < 44): single short word or initials
+//  - Large bubbles (r >= 44): up to 2 lines, ~6-10 chars per line
+// We never overflow the bubble; better to show a short tag than a name
+// chopped mid-word. The hover/click readout below shows the full name.
+function fitLabel(name: string, radius: number): { lines: string[]; size: number } {
+  if (radius < 22) return { lines: [], size: 0 };
+  if (radius < 30) {
+    return { lines: [initials(name)], size: Math.max(9, radius / 2.2) };
+  }
+  // Try to wrap the donor name into 1 or 2 lines that fit horizontally.
+  const maxCharsPerLine = Math.max(4, Math.floor((radius * 2 - 8) / 6));
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return { lines: [initials(name)], size: 10 };
+  if (radius < 40 || words.length === 1) {
+    const w = words[0];
+    if (w.length <= maxCharsPerLine)
+      return { lines: [w.toUpperCase()], size: Math.max(9, Math.min(13, radius / 3)) };
+    return { lines: [initials(name)], size: Math.max(10, radius / 3) };
+  }
+  // Build up two lines
+  const line1: string[] = [];
+  const line2: string[] = [];
+  let active: "a" | "b" = "a";
+  for (const w of words) {
+    const target = active === "a" ? line1 : line2;
+    const current = target.join(" ");
+    const candidate = current ? `${current} ${w}` : w;
+    if (candidate.length <= maxCharsPerLine) {
+      target.push(w);
+    } else if (active === "a") {
+      if (line1.length === 0) {
+        line1.push(w.slice(0, maxCharsPerLine));
+      }
+      active = "b";
+      line2.push(w);
+    }
+  }
+  // Truncate line 2 if too long
+  while (line2.join(" ").length > maxCharsPerLine && line2.length > 0) {
+    line2.pop();
+  }
+  const lines: string[] = [];
+  if (line1.length) lines.push(line1.join(" ").toUpperCase());
+  if (line2.length) lines.push(line2.join(" ").toUpperCase());
+  if (lines.length === 0) lines.push(initials(name));
+  return { lines: lines.slice(0, 2), size: Math.max(9, Math.min(12, radius / 3.5)) };
+}
+
 export default function DonorBubbleChart({
   report,
   portraitUrl,
@@ -220,6 +271,9 @@ export default function DonorBubbleChart({
           {nodes.map((n) => {
             const isHover = n.id === hovered || n.id === selected;
             const fill = colorFor(n.donor.name);
+            const label = fitLabel(n.donor.name, n.r);
+            const lineGap = label.size + 1;
+            const startY = n.y - ((label.lines.length - 1) * lineGap) / 2;
             return (
               <g
                 key={n.id}
@@ -242,21 +296,22 @@ export default function DonorBubbleChart({
                   stroke={isHover ? "#f4f4f5" : "rgba(0,0,0,0.35)"}
                   strokeWidth={isHover ? 2 : 1}
                 />
-                {n.r >= 18 ? (
+                {label.lines.map((line, i) => (
                   <text
+                    key={i}
                     x={n.x}
-                    y={n.y}
+                    y={startY + i * lineGap}
                     textAnchor="middle"
                     dominantBaseline="central"
                     fill="rgba(255,255,255,0.95)"
-                    fontSize={Math.max(9, Math.min(14, n.r / 2.4))}
+                    fontSize={label.size}
                     fontWeight={800}
                     pointerEvents="none"
-                    style={{ userSelect: "none" }}
+                    style={{ userSelect: "none", letterSpacing: 0.2 }}
                   >
-                    {initials(n.donor.name)}
+                    {line}
                   </text>
-                ) : null}
+                ))}
               </g>
             );
           })}
