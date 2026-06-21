@@ -27,18 +27,26 @@ const USMap3D = dynamic(() => import("@/components/USMap3D"), {
 });
 
 // The single rendered app, parameterized so /, /legislator/[bioguide], and
-// (eventually) /state/[code] can all render the same UI with different
-// pre-selected state. Used by app/page.tsx and app/legislator/[bioguide]/page.tsx.
+// /state/[code] can all render the same UI with different pre-selected
+// state. Used by app/page.tsx, app/legislator/[bioguide]/page.tsx, and
+// app/state/[code]/page.tsx.
 export default function MapApp({
   initialLegislator,
+  initialState,
 }: {
   // Optional bioguide id to pre-select. When provided we resolve to that
   // legislator's state and auto-expand their row inside the detail panel.
   initialLegislator?: string;
+  // Optional 2-letter state code to pre-select on the map. Opens the
+  // state detail panel showing that state's roster without expanding any
+  // one legislator. Loses to initialLegislator if both are provided.
+  initialState?: string;
 }) {
   const [legislators, setLegislators] = useState<Legislator[] | null>(null);
   const [legislatorsError, setLegislatorsError] = useState<string | null>(null);
-  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<string | null>(
+    initialState ?? null
+  );
   const [expandedBioguide, setExpandedBioguide] = useState<string | null>(
     initialLegislator ?? null
   );
@@ -77,6 +85,12 @@ export default function MapApp({
       setExpandedBioguide(initialLegislator);
     }
   }, [initialLegislator, legislators]);
+
+  // initialState is set immediately at mount, but if it changes (route
+  // navigation without unmount) keep selectedState in sync.
+  useEffect(() => {
+    if (initialState) setSelectedState(initialState);
+  }, [initialState]);
 
   const selectedLegislators = useMemo(() => {
     if (!selectedState) return [];
