@@ -11,6 +11,23 @@ import type { LegislatorVote, CastCode } from "@/lib/data/votes";
 import type { DonorReport } from "@/lib/data/donors";
 import DonorBubbleChart from "@/components/DonorBubbleChart";
 
+// Tracks whether the viewport is narrow (mobile/portrait phone). When true,
+// the side panel renders as a bottom sheet across the full screen width
+// rather than a fixed 420px right column. The breakpoint is 768px (md in
+// Tailwind), matching the top bar's collapse point.
+function useIsNarrow(): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(max-width: 767px)");
+    const update = () => setNarrow(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  return narrow;
+}
+
 function partyLabel(p: Party): string {
   switch (p) {
     case "D":
@@ -499,6 +516,8 @@ export default function StateDetailPanel({
   // exact card the sharer wanted to surface.
   defaultExpandedBioguide?: string | null;
 }) {
+  const narrow = useIsNarrow();
+
   if (!selectedState) return null;
   const state = stateByCode(selectedState);
   if (!state) return null;
@@ -506,9 +525,31 @@ export default function StateDetailPanel({
   const senators = legislators.filter((l) => l.chamber === "Senate");
   const reps = legislators.filter((l) => l.chamber === "House");
 
-  return (
-    <aside
-      style={{
+  // On phones the panel slides up from the bottom as a sheet covering ~75%
+  // of viewport height. The map stays visible at the top so the user keeps
+  // spatial context while reading the roster.
+  const panelStyle: React.CSSProperties = narrow
+    ? {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        top: "25vh",
+        background: "rgba(10,14,28,0.96)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        borderTopLeftRadius: 18,
+        borderTopRightRadius: 18,
+        boxShadow: "0 -8px 40px rgba(0,0,0,0.55)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        zIndex: 1000,
+        fontFamily:
+          "var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif",
+      }
+    : {
         position: "absolute",
         top: 16,
         right: 16,
@@ -524,14 +565,13 @@ export default function StateDetailPanel({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        // drei <Html> badges render with zIndexRange [100, 0] inside the canvas
-        // wrapper. Setting the panel to 1000 keeps it cleanly above every
-        // floating badge so they don't bleed through the panel content.
         zIndex: 1000,
         fontFamily:
           "var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif",
-      }}
-    >
+      };
+
+  return (
+    <aside style={panelStyle}>
       <header
         style={{
           padding: "18px 20px 14px",

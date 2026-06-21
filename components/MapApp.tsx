@@ -96,22 +96,27 @@ export default function MapApp({
         }}
       />
 
-      {/* Title + search bar — sits over the canvas. */}
-      <div className="pointer-events-none absolute top-0 left-0 right-0 z-10 px-6 py-5 flex items-start justify-between gap-4">
-        <div className="pointer-events-auto">
-          <div className="text-zinc-100 text-lg font-semibold tracking-tight">
-            Who Voted How
-          </div>
-          <div className="text-zinc-500 text-xs mt-1">
-            Free political accountability map
+      {/* Title + search bar — sits over the canvas. Layout collapses to a
+          vertical stack on narrow screens (under 768px) so the search input
+          gets a comfortable row of its own and the title chrome doesn't
+          crush the search dropdown. */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 z-10 px-4 py-4 md:px-6 md:py-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
+        <div className="pointer-events-auto flex items-start justify-between md:block">
+          <div>
+            <div className="text-zinc-100 text-lg font-semibold tracking-tight">
+              Who Voted How
+            </div>
+            <div className="text-zinc-500 text-xs mt-1 hidden md:block">
+              Free political accountability map
+            </div>
           </div>
         </div>
 
-        <div className="pointer-events-auto flex-1 max-w-xs">
+        <div className="pointer-events-auto w-full md:flex-1 md:max-w-xs">
           <SearchBar legislators={legislators ?? []} />
         </div>
 
-        <div className="pointer-events-none text-zinc-600 text-xs text-right max-w-xs leading-relaxed">
+        <div className="pointer-events-none text-zinc-600 text-xs md:text-right md:max-w-xs leading-relaxed hidden md:block">
           {legislatorsError ? (
             <span className="text-red-400">
               Could not load legislator roster: {legislatorsError}

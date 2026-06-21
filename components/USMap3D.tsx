@@ -448,11 +448,29 @@ export default function USMap3D({
     );
   }
 
+  // On narrow portrait viewports (phones held upright), the US doesn't fit
+  // comfortably at the default desktop camera distance — the contiguous 48
+  // gets cropped at the sides. Pull the camera back and widen the FOV so
+  // the entire map (including AK / HI insets) is visible at first paint.
+  // Detect once at mount; rely on OrbitControls + canvas resize for
+  // anything else (the camera doesn't need to move when the screen rotates).
+  const isNarrow =
+    typeof window !== "undefined" && window.innerWidth < 768;
+  const initialCamera: [number, number, number] = isNarrow
+    ? [0, 1100, 800]
+    : [0, 700, 500];
+  const initialFov = isNarrow ? 46 : 38;
+
   return (
     <div className="absolute inset-0">
       <Canvas
         shadows
-        camera={{ position: [0, 700, 500], fov: 38, near: 1, far: 5000 }}
+        camera={{
+          position: initialCamera,
+          fov: initialFov,
+          near: 1,
+          far: 5000,
+        }}
         gl={{ antialias: true }}
       >
         <color attach="background" args={["#05060a"]} />
